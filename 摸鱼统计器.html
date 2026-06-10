@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上班摸鱼统计器</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 30px 20px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .header h1 {
+    font-size: 32px;
+    color: #fff;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+  .header .subtitle {
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+  }
+
+  /* Dashboard */
+  .dashboard {
+    background: rgba(255,255,255,0.95);
+    border-radius: 24px;
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .progress-area {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .progress-ring-wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    flex-shrink: 0;
+  }
+  .progress-ring-wrap svg {
+    transform: rotate(-90deg);
+  }
+  .progress-bg {
+    fill: none;
+    stroke: #eee;
+    stroke-width: 8;
+  }
+  .progress-bar {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s;
+  }
+  .progress-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .progress-percent {
+    font-size: 28px;
+    font-weight: 800;
+    color: #333;
+    line-height: 1;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .dashboard-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .dashboard-info .stats {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  .dashboard-info .stats strong {
+    color: #333;
+    font-size: 18px;
+  }
+  .verdict-box {
+    background: linear-gradient(135deg, #f5f7fa, #e8ecf1);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-top: 8px;
+  }
+  .verdict-title {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 4px;
+  }
+  .verdict-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #444;
+    line-height: 1.5;
+  }
+  .verdict-desc {
+    font-size: 13px;
+    color: #777;
+    line-height: 1.6;
+    margin-top: 6px;
+  }
+  .verdict-emoji {
+    font-size: 22px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* Progress bar mini */
+  .progress-bar-mini {
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-mini-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s;
+  }
+
+  /* Section */
+  .section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  }
+  .section-header {
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .section-header:hover {
+    background: #f8f9fa;
+  }
+  .section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #333;
+  }
+  .section-count {
+    font-size: 13px;
+    color: #999;
+    margin-top: 2px;
+  }
+  .section-toggle {
+    font-size: 20px;
+    color: #bbb;
+    transition: transform 0.3s;
+  }
+  .section-toggle.open {
+    transform: rotate(180deg);
+  }
+  .section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .section-body.open {
+    max-height: 2000px;
+  }
+
+  /* Items */
+  .item {
+    display: flex;
+    align-items: center;
+    padding: 14px 22px;
+    border-top: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 14px;
+  }
+  .item:hover {
+    background: #fafbfc;
+  }
+  .item.checked {
+    background: #f0faf0;
+  }
+  .checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s;
+  }
+  .item.checked .checkbox {
+    border-color: #4CAF50;
+    background: #4CAF50;
+  }
+  .checkbox svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.25s;
+  }
+  .item.checked .checkbox svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .item-text {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.5;
+    transition: color 0.2s;
+  }
+  .item.checked .item-text {
+    color: #999;
+    text-decoration: line-through;
+    text-decoration-color: #ccc;
+  }
+
+  /* Reset button */
+  .reset-area {
+    text-align: center;
+    padding: 20px 0 40px;
+  }
+  .reset-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 12px 36px;
+    border-radius: 50px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+  }
+  .reset-btn:hover {
+    background: rgba(255,255,255,0.35);
+    transform: translateY(-1px);
+  }
+
+  /* Animations */
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  .pop-anim {
+    animation: pop 0.3s ease;
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    body { padding: 12px; }
+    .header h1 { font-size: 24px; }
+    .progress-area { flex-direction: column; text-align: center; }
+    .dashboard { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<script>
+const DATA = [
+  {
+    title: "日常生活篇",
+    icon: "🌿",
+    color: "#e8f5e9",
+    items: [
+      "到公司先喝一杯温水，坚持每天吃早饭",
+      "进公司第一步，不憋，带薪噗噗",
+      "记账，整理下前一天的消费",
+      "写日记复盘，记录3件幸福的事和3件成就感小事",
+      "桌面养一盆绿植/花，浇浇水、养鱼、养绿藻球",
+      "1-2小时起来活动一下走一走，去窗边呼吸新鲜空气",
+      "每天吃一颗西红柿/一些水果有利于白白",
+      "洗杯子洗碗，收拾桌面",
+      "吃过午饭后散散步晒太阳",
+      "多去厕所，不要一直坐着不动"
+    ]
+  },
+  {
+    title: "日常琐事篇",
+    icon: "📋",
+    color: "#e3f2fd",
+    items: [
+      "给手机、耳机充好电",
+      "记账，制定存米计划",
+      "交租、水电、孩子学费、手机话费",
+      "看看时尚博主近期的视频，搭配好3天的衣服",
+      "整理相册，删除无用照片",
+      "和老友聊聊天，消化下情绪",
+      "薅羊毛，领各个app优惠",
+      "看新闻，看不需要动脑子的小说",
+      "给之前拍的照片P图",
+      "清理相册里不用的APP和好友"
+    ]
+  },
+  {
+    title: "娱乐定制篇",
+    icon: "🎮",
+    color: "#fce4ec",
+    items: [
+      "薅羊毛，各种签到/打卡/领奖励",
+      "逛购物网站，买日用品/随缘买买买",
+      "戴耳机听音乐/播客/有声书",
+      "看轻小说、小说、微博、听书",
+      "研究今天中午吃什么外卖",
+      "看度假攻略：目的地、路线、美食、酒店",
+      "看养生美容：门诊、体检、美容、按摩",
+      "买票：电影、音乐节、演唱会、live",
+      "送祝福：长辈生日、朋友生日",
+      "追剧/看电影，提前缓存好"
+    ]
+  },
+  {
+    title: "个人成长篇",
+    icon: "📚",
+    color: "#fff3e0",
+    items: [
+      "用便利贴整理一周计划",
+      "每周消费复盘",
+      "周/月/季度/年度规划",
+      "练办公技能：Excel、PS、PPT等",
+      "学英语：每天背单词打卡",
+      "行业相关资源，考相关证书",
+      "打造个人IP：写文案、做作品集",
+      "关注行业动态，寻找新机会",
+      "学心理学，更了解自己"
+    ]
+  },
+  {
+    title: "养生健体篇",
+    icon: "💪",
+    color: "#f3e5f5",
+    items: [
+      "每天多喝水，不要久坐不动",
+      "随身带梳子，多按摩头部",
+      "喝养生茶：红枣、柠檬、苹果汁",
+      "拉伸颈部背部，扩胸运动、伸懒腰",
+      "桌上放护手霜随手涂（同理护甲油、润唇膏）",
+      "午睡小憩20分钟",
+      "吃健康零食：如坚果，对大脑好",
+      "补充维生素等保健品，带去公司吃",
+      "养生小动作：拍八虚、按摩手掌穴位、眼保健操",
+      "和朋友吐吐槽，发泄掉坏情绪"
+    ]
+  },
+  {
+    title: "好好规划生活",
+    icon: "🗓️",
+    color: "#e0f7fa",
+    items: [
+      "安排一周食谱，吃什么",
+      "看做菜视频，学习菜谱",
+      "寻找好玩的项目和地方",
+      "制定周末、假期出行计划",
+      "订票订酒店探店，查旅行攻略",
+      "预约美容美发",
+      "预约门诊、检查、挂号",
+      "买买生活相关物品",
+      "备节日礼物送朋友、送长辈",
+      "想想今天晚上吃什么，提前订好外卖"
+    ]
+  }
+];
+
+const VERDICTS = [
+  { min: 0,  max: 0,  emoji: "😱", title: "卷王本王", text: "你居然一项都没摸！你不是在上班，你是在用生命诠释\"爱岗敬业\"！老板看了都心疼，建议立刻开始摸鱼，保重身体。" },
+  { min: 1,  max: 15, emoji: "😐", title: "假装在上班", text: "你只是浅尝辄止地摸了一下鱼，大部分时间还在认真工作。这点摸鱼量，连咖啡都还没凉呢，继续加油（摸）！" },
+  { min: 16, max: 30, emoji: "🙂", title: "摸鱼新手村", text: "你已经开始掌握摸鱼的节奏了，工作和生活两不误。不过离摸鱼大师还有距离，建议加大力度，别辜负了大好时光。" },
+  { min: 31, max: 50, emoji: "😎", title: "摸鱼达人", text: "恭喜你已经是合格的摸鱼达人了！工作之余把自己的事情安排得明明白白，效率拉满，老板挑不出毛病，同事还觉得你很努力。" },
+  { min: 51, max: 70, emoji: "🤩", title: "摸鱼高手", text: "你简直是摸鱼界的天花板！今天的KPI：把自己照顾好。你把生活过得比工作还认真，这才是真正的人生赢家思维！" },
+  { min: 71, max: 89, emoji: "🏆", title: "摸鱼传说", text: "传说级别的摸鱼选手！你到底是来上班的还是来度假的？不过话说回来，该做的事都做了，剩下的时间全是在投资自己，完美！" },
+  { min: 90, max: 100, emoji: "👑", title: "摸鱼之神", text: "你就是传说中的\"带薪生活家\"！工作对你来说只是顺便的事，真正的主业是好好生活。你已经超越了99%的打工人，请收下膝盖！" }
+];
+
+// State
+let checked = {};
+DATA.forEach((sec, si) => {
+  sec.items.forEach((_, ii) => {
+    checked[`${si}-${ii}`] = false;
+  });
+});
+
+let openSections = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+
+function getStats() {
+  let total = 0, done = 0;
+  DATA.forEach((sec, si) => {
+    sec.items.forEach((_, ii) => {
+      total++;
+      if (checked[`${si}-${ii}`]) done++;
+    });
+  });
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return { total, done, pct };
+}
+
+function getVerdict(pct) {
+  for (let i = VERDICTS.length - 1; i >= 0; i--) {
+    if (pct >= VERDICTS[i].min) return VERDICTS[i];
+  }
+  return VERDICTS[0];
+}
+
+function getBarColor(pct) {
+  if (pct < 15) return '#ef5350';
+  if (pct < 30) return '#FF9800';
+  if (pct < 50) return '#FFC107';
+  if (pct < 70) return '#66BB6A';
+  if (pct < 90) return '#42A5F5';
+  return '#AB47BC';
+}
+
+function getSectionProgress(si) {
+  const sec = DATA[si];
+  let done = 0;
+  sec.items.forEach((_, ii) => { if (checked[`${si}-${ii}`]) done++; });
+  return { done, total: sec.items.length };
+}
+
+function render() {
+  const { total, done, pct } = getStats();
+  const v = getVerdict(pct);
+  const barColor = getBarColor(pct);
+  const circumference = 2 * Math.PI * 46;
+  const dashOffset = circumference - (pct / 100) * circumference;
+
+  let html = `
+    <div class="header">
+      <h1>🐟 上班摸鱼统计器</h1>
+      <div class="subtitle">今天你摸鱼了吗？打个卡看看~</div>
+    </div>
+
+    <div class="dashboard">
+      <div class="progress-area">
+        <div class="progress-ring-wrap">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle class="progress-bg" cx="55" cy="55" r="46"/>
+            <circle class="progress-bar" cx="55" cy="55" r="46"
+              stroke="${barColor}"
+              stroke-dasharray="${circumference}"
+              stroke-dashoffset="${dashOffset}"/>
+          </svg>
+          <div class="progress-text">
+            <div class="progress-percent" style="color:${barColor}">${pct}%</div>
+            <div class="progress-label">摸鱼指数</div>
+          </div>
+        </div>
+        <div class="dashboard-info">
+          <div class="stats">已完成 <strong>${done}</strong> / ${total} 项打卡</div>
+          <div class="verdict-box">
+            <div class="verdict-title">今日摸鱼鉴定</div>
+            <div class="verdict-text"><span class="verdict-emoji">${v.emoji}</span>${v.title}</div>
+            <div class="verdict-desc">${v.text}</div>
+          </div>
+          <div class="progress-bar-mini">
+            <div class="progress-bar-mini-fill" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  DATA.forEach((sec, si) => {
+    const isOpen = openSections[si];
+    const sp = getSectionProgress(si);
+    html += `
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(${si})">
+          <div class="section-header-left">
+            <div class="section-icon" style="background:${sec.color}">${sec.icon}</div>
+            <div>
+              <div class="section-title">${sec.title}</div>
+              <div class="section-count">${sp.done} / ${sp.total} 已完成</div>
+            </div>
+          </div>
+          <div class="section-toggle ${isOpen ? 'open' : ''}">▾</div>
+        </div>
+        <div class="section-body ${isOpen ? 'open' : ''}">
+    `;
+    sec.items.forEach((item, ii) => {
+      const key = `${si}-${ii}`;
+      const isChecked = checked[key];
+      html += `
+        <div class="item ${isChecked ? 'checked' : ''}" onclick="toggleItem(${si}, ${ii})">
+          <div class="checkbox">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="item-text">${item}</div>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  });
+
+  html += `
+    <div class="reset-area">
+      <button class="reset-btn" onclick="resetAll()">🔄 重置今日打卡</button>
+    </div>
+  `;
+
+  document.getElementById('app').innerHTML = html;
+}
+
+function toggleSection(si) {
+  openSections[si] = !openSections[si];
+  render();
+}
+
+function toggleItem(si, ii) {
+  const key = `${si}-${ii}`;
+  checked[key] = !checked[key];
+  render();
+}
+
+function resetAll() {
+  Object.keys(checked).forEach(k => checked[k] = false);
+  render();
+}
+
+// Initial render
+render();
+</script>
+</body>
+</html>
