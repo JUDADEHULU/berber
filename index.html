@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>憨头统计器</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+    overflow: hidden;
+  }
+  h1 {
+    font-size: 2.8rem;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 20px rgba(100, 200, 255, 0.4);
+    letter-spacing: 0.1em;
+  }
+  .count-display {
+    font-size: 5rem;
+    font-weight: 900;
+    margin: 1.5rem 0;
+    transition: transform 0.15s ease;
+    text-shadow: 0 0 30px rgba(255, 200, 50, 0.5);
+    color: #ffd369;
+  }
+  .count-display.pop {
+    transform: scale(1.3);
+  }
+  .hint {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 2.5rem;
+  }
+  .btn {
+    position: relative;
+    padding: 1.2rem 4rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    background: linear-gradient(135deg, #ffd369, #f7b731);
+    border: none;
+    border-radius: 60px;
+    cursor: pointer;
+    box-shadow: 0 8px 30px rgba(255, 211, 105, 0.4);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255, 211, 105, 0.5);
+  }
+  .btn:active {
+    transform: translateY(2px) scale(0.96);
+    box-shadow: 0 4px 15px rgba(255, 211, 105, 0.3);
+  }
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    transform: scale(0);
+    animation: ripple-anim 0.5s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes ripple-anim {
+    to { transform: scale(3); opacity: 0; }
+  }
+  .float-text {
+    position: fixed;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffd369;
+    pointer-events: none;
+    animation: float-up 0.8s ease-out forwards;
+    text-shadow: 0 0 8px rgba(255, 211, 105, 0.6);
+  }
+  @keyframes float-up {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-120px) scale(1.4); }
+  }
+  .particle {
+    position: fixed;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  /* modal overlay */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    animation: modal-fade-in 0.35s ease forwards;
+  }
+  @keyframes modal-fade-in {
+    to { opacity: 1; }
+  }
+  @keyframes modal-fade-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+  .modal-card {
+    background: linear-gradient(145deg, #1e2a4a, #16213e);
+    border: 1px solid rgba(255,211,105,0.25);
+    border-radius: 20px;
+    padding: 2.5rem 2rem 2rem;
+    max-width: 400px;
+    width: 88%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,211,105,0.15);
+    transform: scale(0.8) translateY(30px);
+    animation: modal-pop-in 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  @keyframes modal-pop-in {
+    to { transform: scale(1) translateY(0); }
+  }
+  .modal-card.closing {
+    animation: modal-pop-out 0.25s ease forwards;
+  }
+  @keyframes modal-pop-out {
+    to { transform: scale(0.85) translateY(20px); opacity: 0; }
+  }
+  .modal-emoji {
+    font-size: 3.2rem;
+    margin-bottom: 0.8rem;
+  }
+  .modal-msg {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: #eee;
+    margin-bottom: 1.5rem;
+  }
+  .modal-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,211,105,0.35);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    margin-bottom: 1.2rem;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+  }
+  .modal-input::placeholder { color: rgba(255,255,255,0.35); }
+  .modal-input:focus { border-color: #ffd369; }
+  .modal-close-btn {
+    padding: 0.6rem 2.2rem;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, #ffd369, #f7b731);
+    color: #1a1a2e;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .modal-close-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255,211,105,0.4);
+  }
+  .modal-close-btn:active {
+    transform: translateY(1px) scale(0.97);
+  }
+  /* confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    z-index: 1001;
+  }
+  /* ---- evolution adventure styles ---- */
+  .evo-choices {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  .evo-choice-btn {
+    flex: 1;
+    padding: 1rem 0.5rem;
+    border-radius: 16px;
+    border: 2px solid rgba(255,211,105,0.3);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .evo-choice-btn:hover {
+    border-color: #ffd369;
+    background: rgba(255,211,105,0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255,211,105,0.2);
+  }
+  .evo-choice-btn:active {
+    transform: translateY(0) scale(0.97);
+  }
+  .evo-choice-btn .choice-emoji {
+    font-size: 2.4rem;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1rem 0 1.2rem;
+    text-align: left;
+  }
+  .stat-item {
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 0.7rem 0.9rem;
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  .stat-item.reveal {
+    animation: stat-reveal 0.4s ease forwards;
+  }
+  @keyframes stat-reveal {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 0.25rem;
+  }
+  .stat-bar-bg {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.2rem;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0;
+    transition: width 0.8s cubic-bezier(.25,.46,.45,.94);
+  }
+  .stat-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #ffd369;
+  }
+  .story-text {
+    font-size: 1.05rem;
+    line-height: 1.9;
+    color: #ddd;
+    text-align: left;
+    margin: 1rem 0 1.5rem;
+    padding: 1rem 1.2rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    border-left: 3px solid #ffd369;
+    min-height: 60px;
+  }
+  .story-char-name {
+    color: #ffd369;
+    font-weight: 700;
+  }
+  .ending-badge {
+    display: inline-block;
+    padding: 0.4rem 1.2rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+  .ending-win {
+    background: linear-gradient(135deg, #00d2d3, #54a0ff);
+    color: #fff;
+  }
+  .ending-lose {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: #fff;
+  }
+  .ending-meh {
+    background: linear-gradient(135deg, #ffd369, #f7b731);
+    color: #1a1a2e;
+  }
+  .story-next-btn {
+    padding: 0.6rem 2.2rem;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, #ffd369, #f7b731);
+    color: #1a1a2e;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .story-next-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255,211,105,0.4);
+  }
+  .story-next-btn:active {
+    transform: translateY(1px) scale(0.97);
+  }
+  .modal-card.wide {
+    max-width: 460px;
+  }
+</style>
+</head>
+<body>
+  <h1>憨头统计器</h1>
+  <div class="count-display" id="count">0</div>
+  <p class="hint">已经按了这么多次了~</p>
+  <button class="btn" id="berBtn">ber</button>
+
+<script>
+  // ---- modal system ----
+  function showModal(emoji, message, showInput) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    const card = document.createElement('div');
+    card.className = 'modal-card';
+
+    let html = `<div class="modal-emoji">${emoji}</div><div class="modal-msg">${message}</div>`;
+    if (showInput) {
+      html += `<textarea class="modal-input" placeholder="写下你的愿望吧..."></textarea><br>`;
+    }
+    html += `<button class="modal-close-btn">好嘞！</button>`;
+    card.innerHTML = html;
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const closeBtn = card.querySelector('.modal-close-btn');
+    function closeModal() {
+      card.classList.add('closing');
+      overlay.style.animation = 'modal-fade-out 0.25s ease forwards';
+      setTimeout(() => overlay.remove(), 260);
+    }
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeModal(); });
+  }
+
+  // ---- confetti burst ----
+  function burstConfetti() {
+    const confettiColors = ['#ffd369','#ff6b6b','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#f7b731','#00d2d3'];
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      c.style.width = (6 + Math.random() * 8) + 'px';
+      c.style.height = (6 + Math.random() * 8) + 'px';
+      c.style.left = (window.innerWidth / 2) + 'px';
+      c.style.top = (window.innerHeight / 2) + 'px';
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 80 + Math.random() * 200;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 60;
+      const rot = Math.random() * 720 - 360;
+      c.animate([
+        { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+        { transform: `translate(${dx}px,${dy + 120}px) rotate(${rot}deg)`, opacity: 0 }
+      ], { duration: 800 + Math.random() * 400, easing: 'cubic-bezier(.25,.46,.45,.94)' });
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 1200);
+    }
+  }
+
+  // ---- helper: open & close overlay ----
+  function openOverlay(cardBuilder) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    const card = document.createElement('div');
+    card.className = 'modal-card wide';
+    cardBuilder(card, overlay);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    return { overlay, card };
+  }
+  function closeOverlay(overlay, card, cb) {
+    card.classList.add('closing');
+    overlay.style.animation = 'modal-fade-out 0.25s ease forwards';
+    setTimeout(() => { overlay.remove(); if (cb) cb(); }, 280);
+  }
+
+  // ========== EVOLUTION ADVENTURE SYSTEM ==========
+  function startEvolution() {
+    // Step 1: Choose character
+    openOverlay((card, overlay) => {
+      card.innerHTML = `
+        <div class="modal-emoji">⚔️</div>
+        <div class="modal-msg">请选择你的进化方向</div>
+        <div class="evo-choices">
+          <button class="evo-choice-btn" data-char="smart">
+            <span class="choice-emoji">🧠</span>聪头智子
+          </button>
+          <button class="evo-choice-btn" data-char="dumb">
+            <span class="choice-emoji">🤪</span>憨头ber
+          </button>
+        </div>`;
+      card.querySelectorAll('.evo-choice-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          const charType = b.dataset.char;
+          closeOverlay(overlay, card, () => generateStats(charType));
+        });
+      });
+    });
+  }
+
+  // Step 2: Random stat generation
+  function generateStats(charType) {
+    const stats = {
+      strength: Math.floor(Math.random() * 90) + 10,
+      hp:       Math.floor(Math.random() * 90) + 10,
+      luck:     Math.floor(Math.random() * 90) + 10,
+      wisdom:   Math.floor(Math.random() * 90) + 10,
+    };
+    const charName = charType === 'smart' ? '聪头智子' : '憨头ber';
+    const charEmoji = charType === 'smart' ? '🧠' : '🤪';
+    const barColors = { strength: '#ff6b6b', hp: '#54a0ff', luck: '#00d2d3', wisdom: '#ff9ff3' };
+    const labels = { strength: '💪 力量', hp: '❤️ HP', luck: '🍀 运气', wisdom: '📖 智慧' };
+
+    openOverlay((card, overlay) => {
+      card.innerHTML = `
+        <div class="modal-emoji">${charEmoji}</div>
+        <div class="modal-msg"><strong>${charName}</strong> 的属性已生成！</div>
+        <div class="stat-grid">
+          ${Object.keys(stats).map((k, i) => `
+            <div class="stat-item" style="animation-delay:${i * 0.15}s" data-stat="${k}">
+              <div class="stat-label">${labels[k]}</div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill" style="background:${barColors[k]}"></div></div>
+              <div class="stat-val">${stats[k]}</div>
+            </div>`).join('')}
+        </div>
+        <button class="story-next-btn" style="display:none" id="statContinueBtn">出发探险！</button>`;
+
+      // Animate stat reveals
+      const items = card.querySelectorAll('.stat-item');
+      items.forEach((item, i) => {
+        setTimeout(() => {
+          item.classList.add('reveal');
+          const key = item.dataset.stat;
+          setTimeout(() => {
+            item.querySelector('.stat-bar-fill').style.width = stats[key] + '%';
+          }, 100);
+        }, i * 200 + 300);
+      });
+      // Show continue button after all stats
+      setTimeout(() => {
+        const cb = card.querySelector('#statContinueBtn');
+        cb.style.display = 'inline-block';
+        cb.addEventListener('click', () => {
+          closeOverlay(overlay, card, () => startStory(charType, charName, charEmoji, stats));
+        });
+      }, items.length * 200 + 600);
+    });
+  }
+
+  // Step 3: Adventure story
+  function startStory(charType, charName, charEmoji, stats) {
+    const storyScenes = buildStoryScenes(charType, charName, charEmoji, stats);
+    let sceneIdx = 0;
+
+    function showScene() {
+      openOverlay((card, overlay) => {
+        const scene = storyScenes[sceneIdx];
+        card.innerHTML = `
+          <div class="modal-emoji">${scene.emoji}</div>
+          <div class="story-text">${scene.text}</div>
+          <button class="story-next-btn">${sceneIdx < storyScenes.length - 1 ? '继续' : '查看结局'}</button>`;
+        card.querySelector('.story-next-btn').addEventListener('click', () => {
+          closeOverlay(overlay, card, () => {
+            sceneIdx++;
+            if (sceneIdx < storyScenes.length) {
+              showScene();
+            } else {
+              showEnding(charType, charName, charEmoji, stats);
+            }
+          });
+        });
+      });
+    }
+    showScene();
+  }
+
+  function buildStoryScenes(charType, charName, charEmoji, stats) {
+    const cn = (t) => `<span class="story-char-name">${t}</span>`;
+    const n = cn(charName);
+
+    // Scene 1: Entering the cave
+    const scene1 = {
+      emoji: '🕳️',
+      text: `夜幕降临，${n} 站在一座古老洞穴的入口前。空气中弥漫着腐朽与血腥的气息，远处传来低沉的咆哮声……<br><br>"这里面藏着传说中的吸血鬼伯爵，" ${n} 握紧拳头，"今晚，就是决战之时！"`
+    };
+
+    // Scene 2: Encounter
+    const encounterLuck = stats.luck >= 50;
+    const scene2 = {
+      emoji: '🦇',
+      text: encounterLuck
+        ? `洞穴深处，${n} 小心翼翼地前行。突然，运气值爆表！脚下踩到一块松动的石板——一道暗门打开了，里面竟然是一把 <strong style="color:#ffd369">圣光匕首</strong>！<br><br>${n} 捡起匕首，感觉力量在体内涌动。继续深入……`
+        : `洞穴深处，${n} 小心翼翼地前行。啪！一脚踩进一个陷阱坑里，摔了个狗吃屎。<br><br>"嘶——好疼！" ${n} 爬了出来，拍掉身上的灰尘。虽然有点狼狈，但继续咬牙深入……`
+    };
+
+    // Scene 3: Boss fight
+    const fightPower = stats.strength + stats.wisdom;
+    const scene3 = {
+      emoji: '🧛',
+      text: fightPower >= 100
+        ? `吸血鬼伯爵从黑暗中现身，披风翻飞，獠牙闪着寒光！<br><br>${n} 毫不畏惧，${stats.wisdom >= 50 ? '运用超凡智慧看穿了吸血鬼的攻击套路' : '凭借惊人的力量正面硬刚'}！激烈的战斗中，${n} 逐渐占据了上风……`
+        : `吸血鬼伯爵从黑暗中现身，披风翻飞，獠牙闪着寒光！<br><br>${n} 有点慌了，但还是鼓起勇气冲了上去！一番苦战，双方都伤痕累累……`
+    };
+
+    return [scene1, scene2, scene3];
+  }
+
+  // Step 4: Ending based on stats
+  function showEnding(charType, charName, charEmoji, stats) {
+    const total = stats.strength + stats.hp + stats.luck + stats.wisdom;
+    let endingType, endingEmoji, endingTitle, endingText;
+
+    if (total >= 280) {
+      // Great victory
+      endingType = 'win';
+      endingEmoji = '👑';
+      endingTitle = '完美胜利！';
+      endingText = `${charName} 以碾压之势击败了吸血鬼伯爵！洞穴中的诅咒被解除，被困的灵魂们纷纷获得了自由。<br><br>世人传颂着 ${charName} 的英勇事迹——"那个按了15下ber按钮的传奇人物！"`;
+    } else if (total >= 180) {
+      // Narrow victory
+      endingType = 'win';
+      endingEmoji = '⚔️';
+      endingTitle = '险胜！';
+      endingText = `${charName} 经过一番苦战，终于将吸血鬼伯爵逼入绝境！最后一击中，${stats.luck >= 50 ? '运气之神眷顾了你' : '拼尽全力'}，将圣光刺入了吸血鬼的心脏！<br><br>虽然浑身是伤，但 ${charName} 成为了真正的英雄！`;
+    } else if (total >= 120) {
+      // Stalemate
+      endingType = 'meh';
+      endingEmoji = '🤝';
+      endingTitle = '势均力敌';
+      endingText = `${charName} 和吸血鬼伯爵打得难解难分，最终双方都筋疲力尽。<br><br>"算了，不打了。"吸血鬼说。<br>"行吧，下次再来。"${charName} 回答。<br><br>于是你们达成了一个奇怪的和平协议……下次记得多按几下按钮！`;
+    } else {
+      // Defeat
+      endingType = 'lose';
+      endingEmoji = '💀';
+      endingTitle = '惨遭败北';
+      endingText = `${charName} 被吸血鬼伯爵一巴掌拍飞了！<br><br>"就这？也敢来挑战我？"吸血鬼嘲讽道。<br><br>${charName} 灰溜溜地跑出了洞穴……但是没关系！回去多练练，下次一定能赢！（再多按几次ber按钮吧~）`;
+    }
+
+    openOverlay((card, overlay) => {
+      card.innerHTML = `
+        <div class="ending-badge ending-${endingType}">${endingEmoji} ${endingTitle}</div>
+        <div class="modal-emoji">${endingEmoji}</div>
+        <div class="story-text">${endingText}</div>
+        <div style="font-size:0.85rem;color:rgba(255,255,255,0.4);margin-bottom:1rem">
+          总属性: ${total} | 💪${stats.strength} ❤️${stats.hp} 🍀${stats.luck} 📖${stats.wisdom}
+        </div>
+        <button class="story-next-btn">再来一次冒险</button>`;
+      card.querySelector('.story-next-btn').addEventListener('click', () => {
+        closeOverlay(overlay, card, () => startEvolution());
+      });
+      if (endingType === 'win') {
+        setTimeout(() => burstConfetti(), 300);
+      }
+    });
+  }
+
+  let count = 0;
+  const countEl = document.getElementById('count');
+  const btn = document.getElementById('berBtn');
+  const colors = ['#ffd369','#f7b731','#ff6b6b','#48dbfb','#ff9ff3','#54a0ff','#5f27cd'];
+
+  btn.addEventListener('click', (e) => {
+    count++;
+    countEl.textContent = count;
+
+    // pop animation
+    countEl.classList.add('pop');
+    setTimeout(() => countEl.classList.remove('pop'), 150);
+
+    // ripple
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 500);
+
+    // float text "+1"
+    const ft = document.createElement('div');
+    ft.className = 'float-text';
+    ft.textContent = '+1';
+    ft.style.left = (e.clientX - 15) + 'px';
+    ft.style.top = (e.clientY - 20) + 'px';
+    document.body.appendChild(ft);
+    setTimeout(() => ft.remove(), 800);
+
+    // particles
+    for (let i = 0; i < 6; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.left = e.clientX + 'px';
+      p.style.top = e.clientY + 'px';
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 40 + Math.random() * 60;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      p.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx}px,${dy}px) scale(0)`, opacity: 0 }
+      ], { duration: 500, easing: 'ease-out' });
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 500);
+    }
+
+    // special milestones
+    if (count === 1) {
+      setTimeout(() => {
+        burstConfetti();
+        showModal('🎂', 'ber，提前祝你生日快乐！', false);
+      }, 350);
+    } else if (count === 5) {
+      setTimeout(() => {
+        showModal('😏', '憨头了，你竟然点了5下', false);
+      }, 350);
+    } else if (count === 10) {
+      setTimeout(() => {
+        burstConfetti();
+        showModal('🌟', '既然你憨头了10下，可以写下你的愿望，截图给小ber，让小ber来实现', true);
+      }, 350);
+    } else if (count === 15) {
+      setTimeout(() => {
+        burstConfetti();
+        startEvolution();
+      }, 350);
+    }
+  });
+</script>
+</body>
+</html>
