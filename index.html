@@ -1,658 +1,349 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>憨头统计器</title>
+<title>鱼仔和小鱼的大冒险·完整版</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-    color: #fff;
-    overflow: hidden;
-  }
-  h1 {
-    font-size: 2.8rem;
-    margin-bottom: 1rem;
-    text-shadow: 0 0 20px rgba(100, 200, 255, 0.4);
-    letter-spacing: 0.1em;
-  }
-  .count-display {
-    font-size: 5rem;
-    font-weight: 900;
-    margin: 1.5rem 0;
-    transition: transform 0.15s ease;
-    text-shadow: 0 0 30px rgba(255, 200, 50, 0.5);
-    color: #ffd369;
-  }
-  .count-display.pop {
-    transform: scale(1.3);
-  }
-  .hint {
-    font-size: 1rem;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 2.5rem;
-  }
-  .btn {
-    position: relative;
-    padding: 1.2rem 4rem;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a1a2e;
-    background: linear-gradient(135deg, #ffd369, #f7b731);
-    border: none;
-    border-radius: 60px;
-    cursor: pointer;
-    box-shadow: 0 8px 30px rgba(255, 211, 105, 0.4);
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(255, 211, 105, 0.5);
-  }
-  .btn:active {
-    transform: translateY(2px) scale(0.96);
-    box-shadow: 0 4px 15px rgba(255, 211, 105, 0.3);
-  }
-  .ripple {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.4);
-    transform: scale(0);
-    animation: ripple-anim 0.5s ease-out forwards;
-    pointer-events: none;
-  }
-  @keyframes ripple-anim {
-    to { transform: scale(3); opacity: 0; }
-  }
-  .float-text {
-    position: fixed;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #ffd369;
-    pointer-events: none;
-    animation: float-up 0.8s ease-out forwards;
-    text-shadow: 0 0 8px rgba(255, 211, 105, 0.6);
-  }
-  @keyframes float-up {
-    0%   { opacity: 1; transform: translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateY(-120px) scale(1.4); }
-  }
-  .particle {
-    position: fixed;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    pointer-events: none;
-  }
-  /* modal overlay */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    animation: modal-fade-in 0.35s ease forwards;
-  }
-  @keyframes modal-fade-in {
-    to { opacity: 1; }
-  }
-  @keyframes modal-fade-out {
-    from { opacity: 1; }
-    to   { opacity: 0; }
-  }
-  .modal-card {
-    background: linear-gradient(145deg, #1e2a4a, #16213e);
-    border: 1px solid rgba(255,211,105,0.25);
-    border-radius: 20px;
-    padding: 2.5rem 2rem 2rem;
-    max-width: 400px;
-    width: 88%;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,211,105,0.15);
-    transform: scale(0.8) translateY(30px);
-    animation: modal-pop-in 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
-  }
-  @keyframes modal-pop-in {
-    to { transform: scale(1) translateY(0); }
-  }
-  .modal-card.closing {
-    animation: modal-pop-out 0.25s ease forwards;
-  }
-  @keyframes modal-pop-out {
-    to { transform: scale(0.85) translateY(20px); opacity: 0; }
-  }
-  .modal-emoji {
-    font-size: 3.2rem;
-    margin-bottom: 0.8rem;
-  }
-  .modal-msg {
-    font-size: 1.15rem;
-    line-height: 1.7;
-    color: #eee;
-    margin-bottom: 1.5rem;
-  }
-  .modal-input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255,211,105,0.35);
-    background: rgba(255,255,255,0.08);
-    color: #fff;
-    font-size: 1rem;
-    outline: none;
-    margin-bottom: 1.2rem;
-    transition: border-color 0.2s;
-    font-family: inherit;
-    resize: vertical;
-    min-height: 80px;
-  }
-  .modal-input::placeholder { color: rgba(255,255,255,0.35); }
-  .modal-input:focus { border-color: #ffd369; }
-  .modal-close-btn {
-    padding: 0.6rem 2.2rem;
-    border-radius: 30px;
-    border: none;
-    background: linear-gradient(135deg, #ffd369, #f7b731);
-    color: #1a1a2e;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
-  }
-  .modal-close-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(255,211,105,0.4);
-  }
-  .modal-close-btn:active {
-    transform: translateY(1px) scale(0.97);
-  }
-  /* confetti */
-  .confetti-piece {
-    position: fixed;
-    width: 10px;
-    height: 10px;
-    pointer-events: none;
-    z-index: 1001;
-  }
-  /* ---- evolution adventure styles ---- */
-  .evo-choices {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 0.5rem;
-  }
-  .evo-choice-btn {
-    flex: 1;
-    padding: 1rem 0.5rem;
-    border-radius: 16px;
-    border: 2px solid rgba(255,211,105,0.3);
-    background: rgba(255,255,255,0.06);
-    color: #fff;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: inherit;
-  }
-  .evo-choice-btn:hover {
-    border-color: #ffd369;
-    background: rgba(255,211,105,0.12);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(255,211,105,0.2);
-  }
-  .evo-choice-btn:active {
-    transform: translateY(0) scale(0.97);
-  }
-  .evo-choice-btn .choice-emoji {
-    font-size: 2.4rem;
-    display: block;
-    margin-bottom: 0.4rem;
-  }
-  .stat-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.8rem;
-    margin: 1rem 0 1.2rem;
-    text-align: left;
-  }
-  .stat-item {
-    background: rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 0.7rem 0.9rem;
-    opacity: 0;
-    transform: translateX(-15px);
-  }
-  .stat-item.reveal {
-    animation: stat-reveal 0.4s ease forwards;
-  }
-  @keyframes stat-reveal {
-    to { opacity: 1; transform: translateX(0); }
-  }
-  .stat-label {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 0.25rem;
-  }
-  .stat-bar-bg {
-    height: 8px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 0.2rem;
-  }
-  .stat-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    width: 0;
-    transition: width 0.8s cubic-bezier(.25,.46,.45,.94);
-  }
-  .stat-val {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #ffd369;
-  }
-  .story-text {
-    font-size: 1.05rem;
-    line-height: 1.9;
-    color: #ddd;
-    text-align: left;
-    margin: 1rem 0 1.5rem;
-    padding: 1rem 1.2rem;
-    background: rgba(0,0,0,0.2);
-    border-radius: 12px;
-    border-left: 3px solid #ffd369;
-    min-height: 60px;
-  }
-  .story-char-name {
-    color: #ffd369;
-    font-weight: 700;
-  }
-  .ending-badge {
-    display: inline-block;
-    padding: 0.4rem 1.2rem;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin-bottom: 1rem;
-  }
-  .ending-win {
-    background: linear-gradient(135deg, #00d2d3, #54a0ff);
-    color: #fff;
-  }
-  .ending-lose {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-    color: #fff;
-  }
-  .ending-meh {
-    background: linear-gradient(135deg, #ffd369, #f7b731);
-    color: #1a1a2e;
-  }
-  .story-next-btn {
-    padding: 0.6rem 2.2rem;
-    border-radius: 30px;
-    border: none;
-    background: linear-gradient(135deg, #ffd369, #f7b731);
-    color: #1a1a2e;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
-  }
-  .story-next-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(255,211,105,0.4);
-  }
-  .story-next-btn:active {
-    transform: translateY(1px) scale(0.97);
-  }
-  .modal-card.wide {
-    max-width: 460px;
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;min-height:100vh;background:#0d1b2a;overflow-x:hidden}
+#bg-layer{position:fixed;top:0;left:0;width:100%;height:100%;background-size:cover;background-position:center;z-index:0;opacity:0;transition:opacity 1.2s ease}
+#bg-layer.visible{opacity:1}
+#bg-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:1}
+#game{position:relative;z-index:2;max-width:740px;width:92%;margin:30px auto;min-height:200px;background:rgba(255,255,255,0.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:20px;border:1px solid rgba(255,255,255,0.15);padding:40px 36px;color:#f0f0f0;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:fadeIn 0.6s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+h1{text-align:center;font-size:2em;margin-bottom:10px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.4)}
+h2{text-align:center;font-size:1.4em;margin-bottom:20px;color:#87ceeb}
+.scene-text{font-size:1.05em;line-height:1.9;margin-bottom:24px;white-space:pre-line;color:#e8e8e8}
+.choices{display:flex;flex-direction:column;gap:12px}
+.choice-btn{padding:14px 24px;border:2px solid rgba(255,215,0,0.4);border-radius:12px;background:rgba(255,215,0,0.08);color:#ffd700;font-size:1em;cursor:pointer;transition:all 0.3s;text-align:left}
+.choice-btn:hover{background:rgba(255,215,0,0.2);border-color:#ffd700;transform:translateX(6px)}
+.choice-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.role-select,.class-select{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.role-btn{padding:16px 32px;border:2px solid rgba(135,206,235,0.5);border-radius:14px;background:rgba(135,206,235,0.1);color:#87ceeb;font-size:1.1em;cursor:pointer;transition:all 0.3s;min-width:140px;text-align:center}
+.role-btn:hover{background:rgba(135,206,235,0.25);border-color:#87ceeb;transform:scale(1.05)}
+.class-btn{padding:16px 28px;border:2px solid rgba(255,165,0,0.5);border-radius:14px;background:rgba(255,165,0,0.1);color:#ffa500;font-size:1.1em;cursor:pointer;transition:all 0.3s;min-width:170px;text-align:center}
+.class-btn:hover{background:rgba(255,165,0,0.25);border-color:#ffa500;transform:scale(1.05)}
+.status-bar{display:flex;justify-content:space-between;margin-bottom:18px;padding:10px 16px;background:rgba(0,0,0,0.3);border-radius:10px;font-size:0.9em;flex-wrap:wrap;gap:4px}
+.status-bar span{color:#aaa}
+.status-bar .val{color:#ffd700;font-weight:bold}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);margin:20px 0}
+.ending-box{text-align:center;padding:24px;margin-top:20px;border:2px solid #ffd700;border-radius:14px;background:rgba(255,215,0,0.08)}
+.ending-box h3{color:#ffd700;font-size:1.4em;margin-bottom:10px}
+.restart-btn{margin-top:20px;padding:12px 36px;border:2px solid #87ceeb;border-radius:12px;background:rgba(135,206,235,0.1);color:#87ceeb;font-size:1em;cursor:pointer;transition:all 0.3s}
+.restart-btn:hover{background:rgba(135,206,235,0.25)}
+.level-up{color:#f7d44a;font-size:1.1em}
+small{font-size:0.75em;opacity:0.7}
 </style>
 </head>
 <body>
-  <h1>憨头统计器</h1>
-  <div class="count-display" id="count">0</div>
-  <p class="hint">已经按了这么多次了~</p>
-  <button class="btn" id="berBtn">ber</button>
-
+<div id="bg-layer"></div>
+<div id="bg-overlay"></div>
+<div id="game"><p style="text-align:center;color:#ffd700;padding:60px 0">加载中...</p></div>
 <script>
-  // ---- modal system ----
-  function showModal(emoji, message, showInput) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
+// ===== 背景图片（复用已有） =====
+var BG={
+  title:"vibe_images/bg_title_1781075537.png",
+  "class":"vibe_images/bg_class_1781075539.png",
+  island:"vibe_images/bg_island2_1781075626.png",
+  diving:"vibe_images/bg_diving_1781075535.png",
+  coast:"vibe_images/bg_coast3_1781075664.png",
+  cave:"vibe_images/bg_cave2_1781075628.png",
+  battle:"vibe_images/bg_battle_1781075502.png",
+  victory:"vibe_images/bg_victory3_1781075667.png",
+  jungle:"vibe_images/bg_island2_1781075626.png",
+  waterfall:"vibe_images/bg_diving_1781075535.png",
+  temple:"vibe_images/bg_tomb2_1781074576.png"
+};
 
-    const card = document.createElement('div');
-    card.className = 'modal-card';
+// ===== 全局状态 =====
+var G={role:'',other:'',pClass:'',oClass:'',courage:0,wisdom:0,bond:0,hp:100,maxHp:100,atk:12,def:5,level:1,exp:0,sp:0,skills:['普通攻击'],hasAmulet:false,hasClue:false};
+var EXP=[0,50,110,190,280,390,520,670];
+function expN(){return EXP[G.level]||200+G.level*70}
 
-    let html = `<div class="modal-emoji">${emoji}</div><div class="modal-msg">${message}</div>`;
-    if (showInput) {
-      html += `<textarea class="modal-input" placeholder="写下你的愿望吧..."></textarea><br>`;
+var gameEl=document.getElementById('game');
+var bgEl=document.getElementById('bg-layer');
+
+function setBg(k){
+  if(BG[k]){
+    bgEl.style.backgroundImage='url("'+BG[k]+'")';
+    bgEl.classList.remove('visible');
+    setTimeout(function(){bgEl.classList.add('visible')},50);
+  }
+}
+
+function render(h){
+  gameEl.style.animation='none';
+  gameEl.offsetHeight;
+  gameEl.style.animation='fadeIn 0.5s ease';
+  gameEl.innerHTML=h;
+}
+
+function sb(){
+  return '<div class="status-bar"><span>角色:<span class="val">'+G.role+'</span>('+G.pClass+')</span><span>❤️<span class="val">'+G.hp+'/'+G.maxHp+'</span></span><span>⚡Lv.<span class="val">'+G.level+'</span></span><span>✨<span class="val">'+G.exp+'</span>/<span class="val">'+expN()+'</span></span><span>🗡️<span class="val">'+G.atk+'</span> 🛡️<span class="val">'+G.def+'</span></span><span>勇气:<span class="val">'+G.courage+'</span> 智慧:<span class="val">'+G.wisdom+'</span> 羁绊:<span class="val">'+G.bond+'</span></span></div>';
+}
+
+function gainExp(a){
+  G.exp+=a;
+  var n=expN();
+  while(G.exp>=n&&G.level<99){
+    G.exp-=n;G.level++;G.maxHp+=12;
+    G.hp=Math.min(G.hp+25,G.maxHp);
+    G.atk+=2;G.def+=1;G.sp++;
+    n=expN();
+  }
+}
+
+function learnSkill(s,cb){
+  if(G.sp<=0){scene('你没有技能点可以分配。',[{t:'返回',f:cb||'sceneCamp()'}]);return}
+  if(G.skills.indexOf(s)>=0){scene('你已经学会了「'+s+'」。',[{t:'返回',f:cb||'sceneCamp()'}]);return}
+  G.skills.push(s);G.sp--;
+  scene('✅ 学会了新技能：「'+s+'」！剩余技能点：'+G.sp,[{t:'继续',f:cb||'sceneCamp()'}]);
+}
+
+function scene(t,ch){
+  var h='<h2>⚔️ 冒险</h2>'+sb()+'<div class="divider"></div><div class="scene-text">'+t+'</div>';
+  if(ch&&ch.length){
+    h+='<div class="choices">';
+    for(var i=0;i<ch.length;i++){
+      h+='<button class="choice-btn" onclick="'+ch[i].f+'"'+(ch[i].d?' disabled':'')+'>'+ch[i].t+'</button>';
     }
-    html += `<button class="modal-close-btn">好嘞！</button>`;
-    card.innerHTML = html;
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
-
-    const closeBtn = card.querySelector('.modal-close-btn');
-    function closeModal() {
-      card.classList.add('closing');
-      overlay.style.animation = 'modal-fade-out 0.25s ease forwards';
-      setTimeout(() => overlay.remove(), 260);
-    }
-    closeBtn.addEventListener('click', closeModal);
-    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closeModal(); });
+    h+='</div>';
   }
+  render(h);
+}
 
-  // ---- confetti burst ----
-  function burstConfetti() {
-    const confettiColors = ['#ffd369','#ff6b6b','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#f7b731','#00d2d3'];
-    for (let i = 0; i < 40; i++) {
-      const c = document.createElement('div');
-      c.className = 'confetti-piece';
-      c.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
-      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-      c.style.width = (6 + Math.random() * 8) + 'px';
-      c.style.height = (6 + Math.random() * 8) + 'px';
-      c.style.left = (window.innerWidth / 2) + 'px';
-      c.style.top = (window.innerHeight / 2) + 'px';
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 80 + Math.random() * 200;
-      const dx = Math.cos(angle) * dist;
-      const dy = Math.sin(angle) * dist - 60;
-      const rot = Math.random() * 720 - 360;
-      c.animate([
-        { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
-        { transform: `translate(${dx}px,${dy + 120}px) rotate(${rot}deg)`, opacity: 0 }
-      ], { duration: 800 + Math.random() * 400, easing: 'cubic-bezier(.25,.46,.45,.94)' });
-      document.body.appendChild(c);
-      setTimeout(() => c.remove(), 1200);
+function startBattle(e){
+  var eHP=e.hp;
+  var log='⚔️ 遭遇了【'+e.name+'】！\n';
+
+  function ui(){
+    var cs=[{t:'🗡️ 普通攻击',a:'a'},{t:'🛡️ 防御',a:'d'}];
+    if(G.skills.indexOf('强力斩')>=0) cs.push({t:'⚡ 强力斩',a:'p'});
+    if(G.skills.indexOf('治愈术')>=0) cs.push({t:'✨ 治愈术',a:'h'});
+    cs.push({t:'🏃 逃跑',a:'f'});
+
+    var h='<h2>⚔️ 战斗</h2>'+sb()+'<div class="divider"></div><div class="scene-text">'+log+'</div><div class="choices"></div>';
+    render(h);
+    var d=document.querySelector('.choices');
+    d.innerHTML='';
+    for(var i=0;i<cs.length;i++){
+      var b=document.createElement('button');
+      b.className='choice-btn';
+      b.textContent=cs[i].t;
+      (function(aa){b.onclick=function(){act(aa)}})(cs[i].a);
+      d.appendChild(b);
     }
   }
 
-  // ---- helper: open & close overlay ----
-  function openOverlay(cardBuilder) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    const card = document.createElement('div');
-    card.className = 'modal-card wide';
-    cardBuilder(card, overlay);
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
-    return { overlay, card };
-  }
-  function closeOverlay(overlay, card, cb) {
-    card.classList.add('closing');
-    overlay.style.animation = 'modal-fade-out 0.25s ease forwards';
-    setTimeout(() => { overlay.remove(); if (cb) cb(); }, 280);
-  }
-
-  // ========== EVOLUTION ADVENTURE SYSTEM ==========
-  function startEvolution() {
-    // Step 1: Choose character
-    openOverlay((card, overlay) => {
-      card.innerHTML = `
-        <div class="modal-emoji">⚔️</div>
-        <div class="modal-msg">请选择你的进化方向</div>
-        <div class="evo-choices">
-          <button class="evo-choice-btn" data-char="smart">
-            <span class="choice-emoji">🧠</span>聪头智子
-          </button>
-          <button class="evo-choice-btn" data-char="dumb">
-            <span class="choice-emoji">🤪</span>憨头ber
-          </button>
-        </div>`;
-      card.querySelectorAll('.evo-choice-btn').forEach(b => {
-        b.addEventListener('click', () => {
-          const charType = b.dataset.char;
-          closeOverlay(overlay, card, () => generateStats(charType));
-        });
-      });
-    });
-  }
-
-  // Step 2: Random stat generation
-  function generateStats(charType) {
-    const stats = {
-      strength: Math.floor(Math.random() * 90) + 10,
-      hp:       Math.floor(Math.random() * 90) + 10,
-      luck:     Math.floor(Math.random() * 90) + 10,
-      wisdom:   Math.floor(Math.random() * 90) + 10,
-    };
-    const charName = charType === 'smart' ? '聪头智子' : '憨头ber';
-    const charEmoji = charType === 'smart' ? '🧠' : '🤪';
-    const barColors = { strength: '#ff6b6b', hp: '#54a0ff', luck: '#00d2d3', wisdom: '#ff9ff3' };
-    const labels = { strength: '💪 力量', hp: '❤️ HP', luck: '🍀 运气', wisdom: '📖 智慧' };
-
-    openOverlay((card, overlay) => {
-      card.innerHTML = `
-        <div class="modal-emoji">${charEmoji}</div>
-        <div class="modal-msg"><strong>${charName}</strong> 的属性已生成！</div>
-        <div class="stat-grid">
-          ${Object.keys(stats).map((k, i) => `
-            <div class="stat-item" style="animation-delay:${i * 0.15}s" data-stat="${k}">
-              <div class="stat-label">${labels[k]}</div>
-              <div class="stat-bar-bg"><div class="stat-bar-fill" style="background:${barColors[k]}"></div></div>
-              <div class="stat-val">${stats[k]}</div>
-            </div>`).join('')}
-        </div>
-        <button class="story-next-btn" style="display:none" id="statContinueBtn">出发探险！</button>`;
-
-      // Animate stat reveals
-      const items = card.querySelectorAll('.stat-item');
-      items.forEach((item, i) => {
-        setTimeout(() => {
-          item.classList.add('reveal');
-          const key = item.dataset.stat;
-          setTimeout(() => {
-            item.querySelector('.stat-bar-fill').style.width = stats[key] + '%';
-          }, 100);
-        }, i * 200 + 300);
-      });
-      // Show continue button after all stats
-      setTimeout(() => {
-        const cb = card.querySelector('#statContinueBtn');
-        cb.style.display = 'inline-block';
-        cb.addEventListener('click', () => {
-          closeOverlay(overlay, card, () => startStory(charType, charName, charEmoji, stats));
-        });
-      }, items.length * 200 + 600);
-    });
-  }
-
-  // Step 3: Adventure story
-  function startStory(charType, charName, charEmoji, stats) {
-    const storyScenes = buildStoryScenes(charType, charName, charEmoji, stats);
-    let sceneIdx = 0;
-
-    function showScene() {
-      openOverlay((card, overlay) => {
-        const scene = storyScenes[sceneIdx];
-        card.innerHTML = `
-          <div class="modal-emoji">${scene.emoji}</div>
-          <div class="story-text">${scene.text}</div>
-          <button class="story-next-btn">${sceneIdx < storyScenes.length - 1 ? '继续' : '查看结局'}</button>`;
-        card.querySelector('.story-next-btn').addEventListener('click', () => {
-          closeOverlay(overlay, card, () => {
-            sceneIdx++;
-            if (sceneIdx < storyScenes.length) {
-              showScene();
-            } else {
-              showEnding(charType, charName, charEmoji, stats);
-            }
-          });
-        });
-      });
+  function act(a){
+    var dm=0,tx='',dd=false;
+    if(a==='a'){
+      dm=Math.max(1,G.atk-e.def+~~(Math.random()*6));
+      tx='你挥剑攻击，造成'+dm+'点伤害！';
+    }else if(a==='d'){
+      dd=true;tx='你举盾防御，本回合受伤减半。';
+    }else if(a==='p'){
+      dm=Math.max(1,~~(G.atk*1.8)-e.def+~~(Math.random()*8));
+      tx='⚡ 强力斩！造成'+dm+'点伤害！';
+    }else if(a==='h'){
+      var hl=18+G.level*3;
+      G.hp=Math.min(G.maxHp,G.hp+hl);
+      tx='✨ 治愈术恢复'+hl+'点生命值。';
+    }else if(a==='f'){
+      if(Math.random()<0.4){log+='\n你成功逃跑了。';scene(log,[{t:'继续探索',f:'sceneExplore()'}]);return}
+      tx='逃跑失败！';
     }
-    showScene();
-  }
-
-  function buildStoryScenes(charType, charName, charEmoji, stats) {
-    const cn = (t) => `<span class="story-char-name">${t}</span>`;
-    const n = cn(charName);
-
-    // Scene 1: Entering the cave
-    const scene1 = {
-      emoji: '🕳️',
-      text: `夜幕降临，${n} 站在一座古老洞穴的入口前。空气中弥漫着腐朽与血腥的气息，远处传来低沉的咆哮声……<br><br>"这里面藏着传说中的吸血鬼伯爵，" ${n} 握紧拳头，"今晚，就是决战之时！"`
-    };
-
-    // Scene 2: Encounter
-    const encounterLuck = stats.luck >= 50;
-    const scene2 = {
-      emoji: '🦇',
-      text: encounterLuck
-        ? `洞穴深处，${n} 小心翼翼地前行。突然，运气值爆表！脚下踩到一块松动的石板——一道暗门打开了，里面竟然是一把 <strong style="color:#ffd369">圣光匕首</strong>！<br><br>${n} 捡起匕首，感觉力量在体内涌动。继续深入……`
-        : `洞穴深处，${n} 小心翼翼地前行。啪！一脚踩进一个陷阱坑里，摔了个狗吃屎。<br><br>"嘶——好疼！" ${n} 爬了出来，拍掉身上的灰尘。虽然有点狼狈，但继续咬牙深入……`
-    };
-
-    // Scene 3: Boss fight
-    const fightPower = stats.strength + stats.wisdom;
-    const scene3 = {
-      emoji: '🧛',
-      text: fightPower >= 100
-        ? `吸血鬼伯爵从黑暗中现身，披风翻飞，獠牙闪着寒光！<br><br>${n} 毫不畏惧，${stats.wisdom >= 50 ? '运用超凡智慧看穿了吸血鬼的攻击套路' : '凭借惊人的力量正面硬刚'}！激烈的战斗中，${n} 逐渐占据了上风……`
-        : `吸血鬼伯爵从黑暗中现身，披风翻飞，獠牙闪着寒光！<br><br>${n} 有点慌了，但还是鼓起勇气冲了上去！一番苦战，双方都伤痕累累……`
-    };
-
-    return [scene1, scene2, scene3];
-  }
-
-  // Step 4: Ending based on stats
-  function showEnding(charType, charName, charEmoji, stats) {
-    const total = stats.strength + stats.hp + stats.luck + stats.wisdom;
-    let endingType, endingEmoji, endingTitle, endingText;
-
-    if (total >= 280) {
-      // Great victory
-      endingType = 'win';
-      endingEmoji = '👑';
-      endingTitle = '完美胜利！';
-      endingText = `${charName} 以碾压之势击败了吸血鬼伯爵！洞穴中的诅咒被解除，被困的灵魂们纷纷获得了自由。<br><br>世人传颂着 ${charName} 的英勇事迹——"那个按了15下ber按钮的传奇人物！"`;
-    } else if (total >= 180) {
-      // Narrow victory
-      endingType = 'win';
-      endingEmoji = '⚔️';
-      endingTitle = '险胜！';
-      endingText = `${charName} 经过一番苦战，终于将吸血鬼伯爵逼入绝境！最后一击中，${stats.luck >= 50 ? '运气之神眷顾了你' : '拼尽全力'}，将圣光刺入了吸血鬼的心脏！<br><br>虽然浑身是伤，但 ${charName} 成为了真正的英雄！`;
-    } else if (total >= 120) {
-      // Stalemate
-      endingType = 'meh';
-      endingEmoji = '🤝';
-      endingTitle = '势均力敌';
-      endingText = `${charName} 和吸血鬼伯爵打得难解难分，最终双方都筋疲力尽。<br><br>"算了，不打了。"吸血鬼说。<br>"行吧，下次再来。"${charName} 回答。<br><br>于是你们达成了一个奇怪的和平协议……下次记得多按几下按钮！`;
-    } else {
-      // Defeat
-      endingType = 'lose';
-      endingEmoji = '💀';
-      endingTitle = '惨遭败北';
-      endingText = `${charName} 被吸血鬼伯爵一巴掌拍飞了！<br><br>"就这？也敢来挑战我？"吸血鬼嘲讽道。<br><br>${charName} 灰溜溜地跑出了洞穴……但是没关系！回去多练练，下次一定能赢！（再多按几次ber按钮吧~）`;
+    eHP=Math.max(0,eHP-dm);
+    log+='\n'+tx;
+    if(eHP>0){
+      var ed=Math.max(1,e.atk-G.def+~~(Math.random()*5));
+      if(dd) ed=~~(ed*0.4);
+      G.hp=Math.max(0,G.hp-ed);
+      log+='\n'+e.name+'反击造成'+ed+'点伤害。';
     }
-
-    openOverlay((card, overlay) => {
-      card.innerHTML = `
-        <div class="ending-badge ending-${endingType}">${endingEmoji} ${endingTitle}</div>
-        <div class="modal-emoji">${endingEmoji}</div>
-        <div class="story-text">${endingText}</div>
-        <div style="font-size:0.85rem;color:rgba(255,255,255,0.4);margin-bottom:1rem">
-          总属性: ${total} | 💪${stats.strength} ❤️${stats.hp} 🍀${stats.luck} 📖${stats.wisdom}
-        </div>
-        <button class="story-next-btn">再来一次冒险</button>`;
-      card.querySelector('.story-next-btn').addEventListener('click', () => {
-        closeOverlay(overlay, card, () => startEvolution());
-      });
-      if (endingType === 'win') {
-        setTimeout(() => burstConfetti(), 300);
-      }
-    });
+    log+='\n【'+e.name+'】HP:'+eHP+'/'+e.hp+'  你的HP:'+G.hp+'/'+G.maxHp;
+    if(G.hp<=0){
+      log+='\n💀 你被击败了……一道神秘光芒将你送回营地。';
+      G.hp=~~(G.maxHp/2);
+      scene(log,[{t:'继续冒险',f:'sceneCamp()'}]);
+      return;
+    }
+    if(eHP<=0){
+      log+='\n🏆 击败了'+e.name+'！获得'+e.exp+'经验';
+      gainExp(e.exp);
+      scene(log,[{t:'继续前进',f:(e.next||'sceneExplore')+'()'},{t:'返回营地',f:'sceneCamp()'}]);
+      return;
+    }
+    ui();
   }
+  ui();
+}
 
-  let count = 0;
-  const countEl = document.getElementById('count');
-  const btn = document.getElementById('berBtn');
-  const colors = ['#ffd369','#f7b731','#ff6b6b','#48dbfb','#ff9ff3','#54a0ff','#5f27cd'];
+// ===== 场景函数 =====
+function sceneTitle(){
+  setBg('title');
+  render('<h1>🏝️ 鱼仔和小鱼的大冒险</h1><h2>马来西亚海岛奇遇记·完整版</h2><div class="divider"></div><div class="scene-text">阳光、沙滩、碧蓝的大海……\n一段意想不到的冒险，即将在马来西亚的某座小岛上展开。\n\n请选择你要扮演的角色：</div><div class="role-select"><button class="role-btn" onclick="selectRole(\'鱼仔\')">🧑 鱼仔<br><small>沉稳可靠的冒险搭档</small></button><button class="role-btn" onclick="selectRole(\'小鱼\')">🧒 小鱼<br><small>机灵活泼的探索先锋</small></button></div>');
+}
 
-  btn.addEventListener('click', (e) => {
-    count++;
-    countEl.textContent = count;
+function selectRole(r){G.role=r;G.other=r==='鱼仔'?'小鱼':'鱼仔';sceneClassSelect()}
 
-    // pop animation
-    countEl.classList.add('pop');
-    setTimeout(() => countEl.classList.remove('pop'), 150);
+function sceneClassSelect(){
+  setBg('class');
+  render('<h1>⚔️ 选择你的职业</h1><div class="divider"></div><div class="scene-text">你选择了扮演 <b style="color:#ffd700">'+G.role+'</b>！\n'+G.other+'已经迫不及待要出发了。\n\n请选择职业分工，'+G.other+'将自动担任另一个：</div><div class="class-select"><button class="class-btn" onclick="selectClass(\'勇士\')">⚔️ 勇士<br><small>近战格斗，勇气+3</small></button><button class="class-btn" onclick="selectClass(\'魔法师\')">🔮 魔法师<br><small>元素法术，智慧+3</small></button></div>');
+}
 
-    // ripple
-    const rect = btn.getBoundingClientRect();
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple';
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-    btn.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 500);
+function selectClass(c){
+  G.pClass=c;G.oClass=c==='勇士'?'魔法师':'勇士';
+  if(c==='勇士'){G.courage+=3;G.atk=15;G.def=7;G.maxHp=115;G.hp=115}
+  else{G.wisdom+=3;G.atk=13;G.def=4;G.maxHp=90;G.hp=90}
+  G.sp=1;scene1();
+}
 
-    // float text "+1"
-    const ft = document.createElement('div');
-    ft.className = 'float-text';
-    ft.textContent = '+1';
-    ft.style.left = (e.clientX - 15) + 'px';
-    ft.style.top = (e.clientY - 20) + 'px';
-    document.body.appendChild(ft);
-    setTimeout(() => ft.remove(), 800);
+function scene1(){
+  setBg('island');
+  render('<h2>🌴 第一章：马来西亚的邀请</h2>'+sb()+'<div class="divider"></div><div class="scene-text">经过漫长的飞行，'+G.role+'和'+G.other+'终于抵达了马来西亚的一座美丽小岛。\n\n'+G.pClass+G.role+'负责扛行李，'+G.oClass+G.other+'则拿着地图兴奋地带路。\n\n"听说这座岛附近的海底有古老沉船的遗迹！"'+G.other+'眼里闪着光。\n"我还听说……岛上有些奇怪的海蚀洞穴，当地人都不敢去。"\n\n你们站在沙滩上，面前有两条路——</div><div class="choices"><button class="choice-btn" onclick="scene2A()">A. 先去海边潜水 🤿 —— 探索海底沉船遗迹</button><button class="choice-btn" onclick="scene2B()">B. 先沿海岸探索 🏖️ —— 寻找传说中的海蚀洞穴</button></div>');
+}
 
-    // particles
-    for (let i = 0; i < 6; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.background = colors[Math.floor(Math.random() * colors.length)];
-      p.style.left = e.clientX + 'px';
-      p.style.top = e.clientY + 'px';
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 40 + Math.random() * 60;
-      const dx = Math.cos(angle) * dist;
-      const dy = Math.sin(angle) * dist;
-      p.animate([
-        { transform: 'translate(0,0) scale(1)', opacity: 1 },
-        { transform: `translate(${dx}px,${dy}px) scale(0)`, opacity: 0 }
-      ], { duration: 500, easing: 'ease-out' });
-      document.body.appendChild(p);
-      setTimeout(() => p.remove(), 500);
-    }
+// ===== 第二章分支 =====
+function scene2A(){
+  G.courage++;setBg('diving');
+  render('<h2>🤿 第二章：深海的秘密</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们换上潜水装备，纵身跃入清澈的海水中。\n\n阳光透过水面洒下斑驳的光影，五彩斑斓的珊瑚和热带鱼在身边穿梭。\n在大约15米深的海底，你们发现了一艘古老的沉船！\n\n'+G.role+'注意到船舱里有一个发光的宝箱，但宝箱上刻着奇怪的符文。\n'+G.other+'在另一侧发现了一个通往更深处的水下通道，通道里传来微弱的光芒。\n\n"那个通道……好像通向岛屿的地下！"'+G.other+'用手势比划着。</div><div class="choices"><button class="choice-btn" onclick="scene3_deep()">A. 打开沉船宝箱 📦 —— 说不定是传说中的宝藏</button><button class="choice-btn" onclick="scene3_tunnel()">B. 探索水下通道 🌊 —— 沿着光芒深入岛屿地下</button></div>');
+}
 
-    // special milestones
-    if (count === 1) {
-      setTimeout(() => {
-        burstConfetti();
-        showModal('🎂', 'ber，提前祝你生日快乐！', false);
-      }, 350);
-    } else if (count === 5) {
-      setTimeout(() => {
-        showModal('😏', '憨头了，你竟然点了5下', false);
-      }, 350);
-    } else if (count === 10) {
-      setTimeout(() => {
-        burstConfetti();
-        showModal('🌟', '既然你憨头了10下，可以写下你的愿望，截图给小ber，让小ber来实现', true);
-      }, 350);
-    } else if (count === 15) {
-      setTimeout(() => {
-        burstConfetti();
-        startEvolution();
-      }, 350);
-    }
-  });
+function scene2B(){
+  G.wisdom++;setBg('coast');
+  render('<h2>🏖️ 第二章：海岸的发现</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们沿着蜿蜒的海岸线前行，热带植物的花香弥漫在空气中。\n\n走了一段路后，'+G.other+'突然停下脚步："你看！"\n\n面前的岩壁上有一个半人高的洞口，里面传来阵阵凉风和若有若无的低吟声。\n洞口旁边的石壁上刻着一些古老的马来文，大意是：\n<i>"沉眠于此者，勿以贪念惊醒。唯勇者与智者同行，方可全身而退。"</i>\n\n'+G.role+'看了看'+G.other+'，两人都有些紧张又兴奋。\n\n"这一定就是传说中的洞穴！我们要进去吗？"</div><div class="choices"><button class="choice-btn" onclick="scene3_cave()">A. 勇敢地进入洞穴 🔦 —— 冒险就要勇往直前！</button><button class="choice-btn" onclick="scene3_prepare()">B. 先回营地做准备 🎒 —— 做好万全之策再行动</button></div>');
+}
+
+// ===== 第三章分支 =====
+function scene3_deep(){
+  setBg('diving');G.courage++;
+  render('<h2>📦 沉船宝箱</h2>'+sb()+'<div class="divider"></div><div class="scene-text">'+G.role+'小心翼翼地游向宝箱，'+G.other+'在一旁紧张地警戒。\n\n当你的手触碰到符文的瞬间，宝箱缓缓打开，一道耀眼的蓝光射出！\n\n里面静静躺着一枚古老的海蓝色护身符，上面刻着美人鱼的图案。\n\n'+G.other+'倒吸一口凉气："这是……传说中的<b style="color:#87ceeb">「海洋之泪」</b>！据说佩戴它的人可以抵御深海女巫的诅咒！"\n\n你将护身符挂在脖子上，感到一股温暖的力量涌入体内。\n\n📿 获得道具【海洋之泪】！防御力+3</div><div class="choices"><button class="choice-btn" onclick="G.hasAmulet=true;G.def+=3;sceneCamp()">🏕️ 带着宝物返回营地</button><button class="choice-btn" onclick="G.hasAmulet=true;G.def+=3;scene3_tunnel()">🌊 继续探索水下通道</button></div>');
+}
+
+function scene3_tunnel(){
+  setBg('waterfall');G.wisdom+=2;G.hasClue=true;
+  render('<h2>🌊 水下通道</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们沿着水下通道一路深入，通道两壁镶嵌着发光的矿石，照亮了前方的路。\n\n游了大约五分钟后，通道突然向上延伸，你们浮出水面——\n\n眼前是一个巨大的地下洞穴！洞穴中央矗立着一座古老的水晶祭坛，祭坛上刻满了文字。\n\n'+G.other+'仔细辨认后念道：\n<i>"深海女巫·娜迦，原为海洋女神的侍女。\n因被人类的背叛而心生怨恨，堕入黑暗。\n她的弱点是——<b style="color:#87ceeb">真诚的善意与古老的安魂曲</b>。\n以武力对抗只会让她更加狂暴。"</i>\n\n📖 获得关键情报【女巫的弱点】！智慧+2\n\n这个信息也许比任何武器都更有价值。</div><div class="choices"><button class="choice-btn" onclick="sceneCamp()">🏕️ 返回营地，研究对策</button><button class="choice-btn" onclick="scene4_battle()">⚔️ 直接去找女巫！</button></div>');
+}
+
+function scene3_cave(){
+  setBg('cave');G.courage+=2;
+  render('<h2>🔦 海蚀洞穴</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们打开头灯，弯腰钻进了洞穴。\n\n洞内比想象中更加宽阔，石壁上长满了荧光苔藓，散发出幽蓝色的光芒。\n越往里走，空气越发冰凉，隐约能听到水滴声和某种低沉的吟唱。\n\n'+G.other+'紧紧抓住你的手臂："你听到了吗？好像有人在唱歌……"\n\n在洞穴的深处，你们发现了一面巨大的石墙，上面刻着一幅壁画——\n画中是一位美丽的女子，被锁链束缚，眼中流着泪水。\n\n壁画下方写着：<i>"我本善良，却被背叛推入深渊。若有人愿意倾听，我愿重归光明。"</i>\n\n突然！洞穴深处传来一声怒吼，地面开始震动！\n一只由珊瑚和贝壳组成的巨大怪物从黑暗中冲了出来！\n\n"入侵者……不许……靠近……主人！"</div><div class="choices"><button class="choice-btn" onclick="startBattle({name:\'珊瑚守卫\',hp:65,atk:14,def:4,exp:50,next:\'sceneCamp\'})">⚔️ 迎战珊瑚守卫！</button></div>');
+}
+
+function scene3_prepare(){
+  setBg('island');G.bond+=2;G.wisdom++;G.hasClue=true;
+  render('<h2>🎒 营地准备</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们决定先回营地做准备。\n\n回到营地后，'+G.other+'从背包里翻出了一本旧书——是在岛上废弃小屋中找到的。\n\n"你看！这里面记载了深海女巫的故事！"\n\n书中写道：\n<i>"深海女巫·娜迦，原为海洋女神的侍女，性情温柔善良。\n千年前，一位贪婪的船长为了夺取海底宝藏，背叛了她的信任，\n将一把匕首刺入她的心脏。\n\n娜迦因悲伤与愤怒堕入黑暗，成为了深海女巫。\n她用黑暗力量封锁了整座岛屿，不允许任何人类靠近。\n\n但如果有人能用<b style="color:#87ceeb">真诚的善意</b>打动她，\n唱出<b style="color:#87ceeb">古老的安魂曲</b>，\n也许就能唤醒她心中残存的光明。"</i>\n\n📖 获得关键情报【女巫的弱点】！智慧+1，羁绊+2\n\n'+G.other+'认真地说："看来我们不能硬来，得想办法打动她。"</div><div class="choices"><button class="choice-btn" onclick="scene2A()">🤿 准备好了，去潜水探索</button><button class="choice-btn" onclick="scene2B()">🏖️ 去海岸探索</button><button class="choice-btn" onclick="sceneExplore()">🌲 先去丛林探索</button></div>');
+}
+
+// ===== 探索区域 =====
+function sceneExplore(){
+  setBg('jungle');
+  render('<h2>🌲 探索：热带丛林</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们沿着一条小路走进了茂密的热带丛林。\n\n参天大树遮天蔽日，各种奇异的鸟鸣声在四周回荡。\n突然，'+G.other+'指着前方喊道："看！那边有个瀑布！"\n\n瀑布后面隐约能看到一个山洞入口。\n\n而在另一个方向，一座古老的石质建筑从树丛中露出了一角——看起来像是一座废弃的神庙。</div><div class="choices"><button class="choice-btn" onclick="sceneWaterfall()">🌊 前往瀑布山洞</button><button class="choice-btn" onclick="sceneTemple()">🏛️ 探索古老神庙</button><button class="choice-btn" onclick="sceneCamp()">🏕️ 返回营地</button><button class="choice-btn" onclick="scene4_battle()">⚔️ 深入丛林寻找女巫</button></div>');
+}
+
+function sceneWaterfall(){
+  setBg('waterfall');
+  render('<h2>🌊 瀑布山洞</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们小心翼翼地穿过瀑布，进入了后面的山洞。\n\n洞内凉爽湿润，石壁上闪烁着萤火虫般的微光。\n在洞穴深处，你们发现了一块刻满符文的石板，上面记载着古老的祝福——\n\n<i>"旅人至此，可获大地之力：防御永久+2"</i>\n\n'+G.role+'伸手触碰石板，一道温暖的光芒流入体内。\n防御力增加了！</div><div class="choices"><button class="choice-btn" onclick="G.def+=2;sceneExplore()">🔙 离开洞穴，继续探索</button></div>');
+}
+
+function sceneTemple(){
+  setBg('temple');
+  render('<h2>🏛️ 古老神庙</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们走进那座废弃的神庙。\n\n庙宇内部布满了藤蔓和青苔，但壁画依然清晰可见。\n壁画讲述了一位古代勇士如何用智慧和勇气战胜了深海女巫的故事。\n\n在祭坛上，你们发现了一本破旧的技能书：\n<b style="color:#87ceeb">「强力斩」</b>——可以学会强力的近战攻击技能！\n\n是否要学习？（需要1个技能点）</div><div class="choices"><button class="choice-btn" onclick="learnSkill(\'强力斩\',\'sceneExplore()\')">📖 学习强力斩</button><button class="choice-btn" onclick="sceneExplore()">🔙 暂时不学，离开神庙</button></div>');
+}
+
+function sceneCamp(){
+  setBg('island');
+  var h=Math.min(20,G.maxHp-G.hp);G.hp+=h;
+  render('<h2>🏕️ 营地休整</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们回到营地，'+G.other+'用椰子叶搭了一个简易凉棚。\n\n你休息了一会儿，恢复了 '+h+' 点生命值。\n\n'+G.other+'拿出收集到的情报："我打听了一下，这座岛的深处住着一位古老的<b style="color:#e84c4c">深海女巫</b>。\n传说她被封印在岛屿中心的水晶洞穴里，但最近封印似乎正在减弱……\n如果我们不行动，整个岛屿可能会被她的力量吞噬。"\n\n你目前有 '+G.sp+' 个技能点可用。'+(G.hasClue?'\n\n<b style="color:#87ceeb">💡 你已经知道了女巫的弱点——真诚的善意和古老的安魂曲。</b>':'')+'</div><div class="choices"><button class="choice-btn" onclick="learnSkill(\'治愈术\',\'sceneCamp()\')">📖 学习治愈术（需1技能点）</button><button class="choice-btn" onclick="scene1()">🏖️ 继续探索海岸</button><button class="choice-btn" onclick="sceneExplore()">🌲 进入丛林</button><button class="choice-btn" onclick="scene4_battle()">⚔️ 前往水晶洞穴，直面深海女巫！</button></div>');
+}
+
+// ===== 第四章：Boss战 =====
+function scene4_battle(){
+  setBg('battle');
+  var extraBtns='';
+  if(G.hasClue) extraBtns+='<button class="choice-btn" onclick="scene5_wisdom()">📖 运用古老知识，唱出安魂曲</button>';
+  if(G.bond>=5) extraBtns+='<button class="choice-btn" onclick="scene5_bond()">🤝 用羁绊的力量感化她</button>';
+  if(!G.hasClue&&G.bond<5) extraBtns+='<button class="choice-btn" disabled>📖 运用古老知识（需要情报）</button><button class="choice-btn" disabled>🤝 羁绊感化（需要羁绊≥5）</button>';
+
+  render('<h2>💀 第四章：深海女巫·娜迦</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你们来到了洞穴最深处的水晶洞穴。\n\n整个洞穴被暗紫色的光芒笼罩，空气中弥漫着一股令人窒息的压迫感。\n在水晶柱的中央，一个身披暗紫色长袍的女人鱼尾人身，悬浮在半空中。\n\n她缓缓睁开眼睛，眼中闪烁着愤怒与悲伤交织的光芒。\n\n"又是人类……你们来到这里，是为了像从前一样背叛我吗？"\n\n'+G.other+'握紧了拳头，'+G.role+'深吸一口气。\n\n深海女巫·娜迦举起双手，暗紫色的能量在她掌中聚集——\n\n你们该如何应对？</div><div class="choices"><button class="choice-btn" onclick="scene5_fight()">⚔️ 直接战斗！用力量击败她</button><button class="choice-btn" onclick="scene5_strategy()">🧠 制定策略，寻找她的弱点</button><button class="choice-btn" onclick="scene5_talk()">💬 尝试和她对话</button>'+extraBtns+'</div>');
+}
+
+// ===== 第五章分支 =====
+function scene5_fight(){
+  setBg('battle');G.courage+=2;
+  var bossHp=G.hasAmulet?100:140;
+  var bossAtk=G.hasAmulet?16:22;
+  render('<h2>⚔️ 正面交锋！</h2>'+sb()+'<div class="divider"></div><div class="scene-text">"来吧！"'+G.role+'拔出武器冲上前去。\n\n娜迦冷笑一声："果然……人类永远只会用暴力。"\n\n暗紫色的能量如潮水般涌来！\n'+(G.hasAmulet?'幸好海洋之泪发出了蓝色的光芒，为你抵挡了一部分伤害！\n':'')+'一场激烈的战斗开始了！</div><div class="choices"><button class="choice-btn" onclick="startBattle({name:\'深海女巫·娜迦\',hp:'+bossHp+',atk:'+bossAtk+',def:8,exp:80,next:\'scene5_lose\'})">⚔️ 开始战斗！</button></div>');
+}
+
+function scene5_strategy(){
+  setBg('battle');G.wisdom+=2;
+  render('<h2>🧠 战术分析</h2>'+sb()+'<div class="divider"></div><div class="scene-text">'+G.role+'拉住'+G.other+'退后一步，仔细观察。\n\n"你看，她的力量似乎来自洞穴里那些暗紫色的水晶……如果我们能破坏那些水晶，也许能削弱她的力量。"\n\n'+G.other+'点头："我来吸引她的注意力，你趁机破坏水晶！"\n\n你制定了周密的计划——\n第一步：'+G.other+'用魔法吸引娜迦的注意力\n第二步：'+G.role+'攻击洞穴四周的暗紫色水晶\n第三步：趁她力量减弱时发起总攻！\n\n这个计划能大幅削弱她的战斗力！</div><div class="choices"><button class="choice-btn" onclick="startBattle({name:\'虚弱的女巫·娜迦\',hp:55,atk:12,def:4,exp:100,next:\'scene5_lose\'})">🎯 执行计划！</button></div>');
+}
+
+function scene5_talk(){
+  setBg('battle');G.bond+=2;
+  var talkHtml='';
+  if(G.hasClue){
+    talkHtml='娜迦沉默了许久……\n\n"你们……真的和从前那些人不一样吗？"\n她的声音不再那么冰冷了。</div><div class="choices"><button class="choice-btn" onclick="scene5_wisdom()">📖 唱出安魂曲</button>'+(G.bond>=5?'<button class="choice-btn" onclick="scene5_bond()">🤝 用羁绊感化她</button>':'')+'<button class="choice-btn" onclick="scene_victory_talk()">💬 真诚地伸出手</button></div>';
+  }else{
+    talkHtml='"哼……天真。"娜迦挥手，暗紫色的能量将你推开！\n\n看来光靠话语还不够，你需要更多的了解才能打动她。</div><div class="choices"><button class="choice-btn" onclick="scene5_fight()">⚔️ 不得不战斗了</button><button class="choice-btn" onclick="scene5_strategy()">🧠 换个策略</button><button class="choice-btn" onclick="sceneCamp()">🏕️ 先撤退，找更多线索</button></div>';
+  }
+  render('<h2>💬 对话的尝试</h2>'+sb()+'<div class="divider"></div><div class="scene-text">"等一下！"'+G.role+'举起双手，缓缓走向娜迦。\n\n娜迦警惕地看着你："你想做什么？"\n\n"我们不是来伤害你的。"'+G.role+'平静地说，"我们知道了你的故事……你曾经守护这片海域，对吗？"\n\n娜迦的表情出现了一瞬间的动摇，但随即又恢复了冷漠："知道又如何？你们人类从来都是利用完就抛弃……"\n\n'+G.other+'走上前："不是所有人类都一样的。请给我们一个机会，让我们证明给你看。"\n\n'+talkHtml);
+}
+
+function scene5_wisdom(){
+  setBg('battle');G.wisdom+=3;
+  render('<h2>📖 安魂曲</h2>'+sb()+'<div class="divider"></div><div class="scene-text">'+G.role+'回想起在古书中读到的安魂曲歌词，缓缓开口唱了起来：\n\n<i style="color:#87ceeb">"深海的娜迦啊，请听我说——\n你的善良从未消失，只是被悲伤掩埋。\n那些背叛你的人，不代表所有人。\n请让怨恨随风而逝，让光明重返你的心灵……"</i>\n\n随着歌声，洞穴中的暗紫色水晶开始一个个碎裂，取而代之的是温暖的金色光芒。\n\n娜迦愣住了，暗紫色的能量从她身上缓缓剥离。\n她的眼中涌出了泪水："这首歌……这是海洋女神曾经唱给我听的……"\n\n暗紫色的长袍逐渐变成了海蓝色，她终于变回了那个温柔的海洋侍女。\n\n"谢谢你……用歌声唤醒了我心中残存的光明。"\n\n她微笑着，泪水滑落面庞。</div><div class="choices"><button class="choice-btn" onclick="scene_victory_wisdom()">🌟 见证奇迹……</button></div>');
+}
+
+function scene5_bond(){
+  setBg('battle');G.bond+=3;
+  render('<h2>🤝 羁绊的力量</h2>'+sb()+'<div class="divider"></div><div class="scene-text">'+G.role+'和'+G.other+'对视一眼，彼此点了点头。\n\n两人一起走向娜迦，手牵着手。\n\n"娜迦，"'+G.role+'说，"我们理解被背叛的痛苦。但我们这一路冒险，相互扶持，从未放弃过彼此。这份羁绊告诉我们——不是所有关系都意味着背叛。"\n\n'+G.other+'接着说："你看，我们只是一个'+G.pClass+'和一个'+G.oClass+'，力量渺小，但因为有彼此，我们走到了这里。如果你愿意，我们也可以成为你的朋友。"\n\n你们之间的羁绊化作了一道温暖的金色光芒，笼罩了整个洞穴。\n\n娜迦看着这道光，泪水夺眶而出——\n\n"这种温暖的感觉……我已经……几百年没有感受过了……"\n\n暗紫色的能量彻底消散，娜迦变回了那个温柔的海蓝色身影。\n\n"谢谢你们……让我重新相信了人类。"</div><div class="choices"><button class="choice-btn" onclick="scene_victory_bond()">🌈 最温暖的结局……</button></div>');
+}
+
+function scene5_lose(){
+  setBg('battle');
+  var loseText='';
+  if(G.hp>0){
+    loseText='经过一番苦战，娜迦终于被击败了。\n\n她跪倒在地，暗紫色的能量逐渐消散，露出原本海蓝色的身影。\n\n"你们……赢了。"她的声音很平静，"杀了我吧。反正……活着也只有孤独。"';
+  }else{
+    loseText='娜迦的力量太过强大，你们被暗紫色的能量击退，瘫倒在地。\n\n但就在娜迦准备给予最后一击时，她看到了你们紧紧握着彼此的手。\n\n"……你们，为什么不肯放弃？"娜迦的声音带着一丝困惑。\n\n'+G.role+'艰难地抬起头："因为……我们不会丢下彼此。就像……你曾经不会丢下这片海域一样。"\n\n娜迦的手停在了半空中。';
+  }
+  render('<h2>💫 苦战之后</h2>'+sb()+'<div class="divider"></div><div class="scene-text">'+loseText+'\n\n'+G.other+'走上前，蹲下来看着她："我们不打算伤害你。我们来这里，是为了帮助你。"\n\n娜迦抬起头，眼中的愤怒变成了困惑和……一丝希望？</div><div class="choices"><button class="choice-btn" onclick="scene_victory_talk()">🤝 向她伸出手</button><button class="choice-btn" onclick="sceneCamp()">🏕️ 先回营地疗伤，改日再来</button></div>');
+}
+
+// ===== 胜利结局 =====
+function scene_victory_talk(){
+  setBg('victory');G.bond+=2;
+  render('<h2>🌈 结局：理解与和解</h2>'+sb()+'<div class="divider"></div><div class="scene-text">你向娜迦伸出了手。\n\n"我们不是敌人。我们来这里度假，是因为热爱这片大海。而你——正是守护这片大海的人。"\n\n娜迦看着你的手，犹豫了很久。\n\n最终，她握住了你的手。\n\n"……几百年了，第一次有人愿意先伸出手。"\n\n暗紫色的能量如退潮般消散，洞穴重新被蓝色的光芒照亮。\n娜迦变回了美丽的海洋守护者，微笑着对你们鞠了一躬。\n\n"谢谢你们。从今天起，这片海域将永远为你们敞开。"\n\n'+G.other+'开心地说："那我们以后每年夏天都来看你！"\n\n三个人（？）一起笑了。这是属于你们的，夏日限定幸福。</div><div class="ending-box"><h3>🎉 恭喜通关！</h3><p>你以<strong>理解之路</strong>完成了冒险！<br>勇气:'+G.courage+' | 智慧:'+G.wisdom+' | 羁绊:'+G.bond+'<br>最终等级: Lv.'+G.level+'</p></div><div class="choices"><button class="choice-btn restart-btn" onclick="restart()">🔄 重新开始冒险</button></div>');
+}
+
+function scene_victory_wisdom(){
+  setBg('victory');
+  render('<h2>📖 结局：安魂之歌</h2>'+sb()+'<div class="divider"></div><div class="scene-text">随着安魂曲的最后一个音符落下，整个洞穴被金色的光芒充满。\n\n娜迦跪在地上，泪流满面，但嘴角却带着微笑。\n\n"我想起来了……我全都想起来了。\n我不是女巫，我是娜迦——大海的女儿。\n谢谢你帮我找回了真正的自己。"\n\n她站起身来，海蓝色的长发在海水中飘动。\n\n"作为感谢，我将赐予你们「大海的祝福」——\n从今以后，无论你们在哪里，都能听到海浪的声音。\n那是我在告诉你们：我一直记得你们。"\n\n'+G.role+'和'+G.other+'的眼角也有些湿润。\n\n这个夏天，注定是最难忘的回忆。</div><div class="ending-box"><h3>🎉 恭喜通关！</h3><p>你以<strong>智慧之路</strong>完成了冒险！<br>勇气:'+G.courage+' | 智慧:'+G.wisdom+' | 羁绊:'+G.bond+'<br>最终等级: Lv.'+G.level+'</p></div><div class="choices"><button class="choice-btn restart-btn" onclick="restart()">🔄 重新开始冒险</button></div>');
+}
+
+function scene_victory_bond(){
+  setBg('victory');
+  render('<h2>🌟 最佳结局：羁绊的奇迹</h2>'+sb()+'<div class="divider"></div><div class="scene-text">金色的光芒化作无数光点，在洞穴中翩翩起舞。\n\n娜迦——不，是娜迦莉亚，在光芒中翩翩起舞，如同回到了最初的模样。\n\n"你们让我相信了一件事——"\n她停下舞步，微笑着看向你们：\n\n<b style="color:#ffd700">"真正的羁绊，可以跨越时间与仇恨。"</b>\n\n洞穴的天花板裂开一道缝隙，阳光洒了进来。\n海水变得温暖而清澈，无数热带鱼涌进洞穴，围绕着你们三个转圈。\n\n娜迦莉亚轻轻拉着你们的手："来，我带你们去看最美的海底花园。\n这是我只给最好的朋友看的秘密。"\n\n'+G.role+'和'+G.other+'相视一笑，手牵得更紧了。\n\n在蔚蓝的深海中，三个身影缓缓游向远方——\n身后留下一串金色的气泡，在阳光中闪闪发光。\n\n这就是你们的大冒险。\n充满勇气、智慧，和最珍贵的羁绊。</div><div class="ending-box"><h3>🏆 恭喜通关·最佳结局！</h3><p>你以<strong>羁绊之路</strong>完成了最完美的冒险！<br>勇气:'+G.courage+' | 智慧:'+G.wisdom+' | 羁绊:'+G.bond+'<br>最终等级: Lv.'+G.level+'</p></div><div class="choices"><button class="choice-btn restart-btn" onclick="restart()">🔄 重新开始冒险</button></div>');
+}
+
+// ===== 启动 =====
+function restart(){
+  G.role='';G.other='';G.pClass='';G.oClass='';
+  G.courage=0;G.wisdom=0;G.bond=0;
+  G.hp=100;G.maxHp=100;G.atk=12;G.def=5;
+  G.level=1;G.exp=0;G.sp=0;
+  G.skills=['普通攻击'];
+  G.hasAmulet=false;G.hasClue=false;
+  sceneTitle();
+}
+
+// 启动游戏
+sceneTitle();
 </script>
 </body>
 </html>
