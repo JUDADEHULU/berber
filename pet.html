@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>萌宠养成日记</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;min-height:100vh;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);overflow-x:hidden;color:#e0e0e0}
+.container{max-width:480px;margin:0 auto;padding:20px 16px}
+h1{text-align:center;font-size:1.8em;background:linear-gradient(90deg,#f093fb,#f5576c,#fda085);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none;margin-bottom:4px}
+.subtitle{text-align:center;font-size:0.85em;color:#8899aa;margin-bottom:20px}
+.day-badge{text-align:center;font-size:0.8em;color:#aabbcc;margin-bottom:16px}
+.day-badge span{color:#fda085;font-weight:bold}
+
+/* 宠物展示区 */
+.pet-stage{position:relative;background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.02) 100%);border-radius:24px;border:1px solid rgba(255,255,255,0.08);padding:30px 20px;margin-bottom:16px;text-align:center;min-height:260px;overflow:hidden}
+.pet-stage::before{content:'';position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(180deg,transparent,rgba(100,200,150,0.06));border-radius:0 0 24px 24px}
+.pet-display{font-size:100px;line-height:1.2;animation:petFloat 3s ease-in-out infinite;cursor:pointer;user-select:none;transition:transform 0.3s;position:relative;z-index:2;display:inline-block}
+.pet-display:hover{transform:scale(1.15)}
+.pet-display.bounce{animation:petBounce 0.6s ease}
+.pet-display.shake{animation:petShake 0.5s ease}
+.pet-display.spin{animation:petSpin 0.8s ease}
+.pet-display.glow{animation:petGlow 1.5s ease}
+.pet-display.evolve{animation:petEvolve 2s ease}
+.pet-name{font-size:1.1em;color:#f093fb;margin-top:8px;font-weight:bold}
+.pet-title{font-size:0.75em;color:#8899aa;margin-top:2px}
+.pet-mood{font-size:0.85em;color:#fda085;margin-top:6px;min-height:20px}
+
+/* 对话气泡 */
+.bubble-wrap{position:relative;margin-bottom:16px;min-height:60px}
+.bubble{background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);border-radius:16px;border:1px solid rgba(255,255,255,0.1);padding:14px 18px;position:relative;animation:bubbleIn 0.4s ease}
+.bubble::before{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:8px solid rgba(255,255,255,0.08)}
+.bubble-text{font-size:0.9em;line-height:1.6;color:#ddeeff}
+.bubble .hearts{position:absolute;top:-10px;right:10px;font-size:14px;animation:heartFloat 2s ease infinite}
+
+/* 状态条 */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.stat-item{background:rgba(255,255,255,0.04);border-radius:12px;padding:10px 12px}
+.stat-label{font-size:0.75em;color:#8899aa;margin-bottom:4px;display:flex;justify-content:space-between}
+.stat-bar{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden}
+.stat-fill{height:100%;border-radius:3px;transition:width 0.5s ease}
+.stat-fill.hunger{background:linear-gradient(90deg,#ff6b6b,#ffa07a)}
+.stat-fill.happy{background:linear-gradient(90deg,#ffd93d,#ff6bcb)}
+.stat-fill.clean{background:linear-gradient(90deg,#6bcfff,#48dbfb)}
+.stat-fill.energy{background:linear-gradient(90deg,#2ed573,#7bed9f)}
+.stat-fill.exp{background:linear-gradient(90deg,#a55eea,#f093fb)}
+.stat-fill.love{background:linear-gradient(90deg,#ff6bcb,#f093fb)}
+
+/* 经验条 */
+.exp-bar-wrap{background:rgba(255,255,255,0.04);border-radius:12px;padding:10px 14px;margin-bottom:16px}
+.exp-header{display:flex;justify-content:space-between;font-size:0.8em;margin-bottom:6px;color:#8899aa}
+.exp-header .lv{color:#f093fb;font-weight:bold}
+.exp-bar{height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden}
+.exp-fill{height:100%;border-radius:4px;transition:width 0.5s ease;background:linear-gradient(90deg,#a55eea,#f093fb)}
+
+/* 操作按钮 */
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.act-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;transition:all 0.3s;user-select:none}
+.act-btn:hover{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.2);transform:translateY(-2px)}
+.act-btn:active{transform:translateY(0) scale(0.95)}
+.act-btn .icon{font-size:1.8em;display:block;margin-bottom:4px}
+.act-btn .label{font-size:0.75em;color:#aabbcc}
+.act-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+.act-btn.cooldown{position:relative;overflow:hidden}
+.act-btn.cooldown::after{content:'';position:absolute;bottom:0;left:0;height:3px;background:linear-gradient(90deg,#f093fb,#f5576c);animation:cooldownBar 3s linear forwards}
+
+/* 签到 */
+.checkin{background:linear-gradient(135deg,rgba(240,147,251,0.1),rgba(245,87,108,0.1));border:1px solid rgba(240,147,251,0.2);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.checkin-info{font-size:0.85em}
+.checkin-info .streak{color:#fda085;font-weight:bold}
+.checkin-btn{background:linear-gradient(135deg,#f093fb,#f5576c);border:none;border-radius:12px;padding:10px 20px;color:white;font-size:0.85em;cursor:pointer;transition:all 0.3s;font-weight:bold}
+.checkin-btn:hover{transform:scale(1.05);box-shadow:0 4px 15px rgba(240,147,251,0.3)}
+.checkin-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+/* 成就 */
+.achieve-section{background:rgba(255,255,255,0.04);border-radius:16px;padding:14px 18px;margin-bottom:16px}
+.achieve-title{font-size:0.85em;color:#fda085;margin-bottom:8px;font-weight:bold}
+.achieve-list{display:flex;flex-wrap:wrap;gap:6px}
+.achieve-badge{font-size:0.75em;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:#8899aa;transition:all 0.3s}
+.achieve-badge.unlocked{background:rgba(240,147,251,0.15);border-color:rgba(240,147,251,0.3);color:#f093fb}
+
+/* 日志 */
+.log-section{background:rgba(255,255,255,0.04);border-radius:16px;padding:14px 18px;margin-bottom:16px}
+.log-title{font-size:0.85em;color:#8899aa;margin-bottom:8px;font-weight:bold}
+.log-list{max-height:120px;overflow-y:auto;font-size:0.78em;color:#667788}
+.log-list::-webkit-scrollbar{width:3px}
+.log-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
+.log-entry{padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.log-entry:last-child{border:none}
+.log-time{color:#556677}
+
+/* 重置按钮 */
+.reset-btn{display:block;margin:20px auto;background:none;border:1px solid rgba(255,100,100,0.3);border-radius:10px;padding:8px 20px;color:rgba(255,100,100,0.5);font-size:0.75em;cursor:pointer;transition:all 0.3s}
+.reset-btn:hover{border-color:rgba(255,100,100,0.6);color:rgba(255,100,100,0.8)}
+
+/* Toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(30,30,50,0.95);backdrop-filter:blur(10px);border:1px solid rgba(240,147,251,0.3);border-radius:12px;padding:12px 24px;color:#f093fb;font-size:0.85em;z-index:100;animation:toastIn 0.3s ease;pointer-events:none}
+.toast.out{animation:toastOut 0.3s ease forwards}
+
+/* 进化弹窗 */
+.evolve-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease}
+.evolve-modal{text-align:center;animation:evolveModal 0.5s ease}
+.evolve-modal .old{font-size:80px;opacity:0.5;margin-bottom:10px}
+.evolve-modal .arrow{font-size:30px;color:#f093fb;margin:10px 0}
+.evolve-modal .new{font-size:120px;animation:petGlow 1.5s ease infinite}
+.evolve-modal .text{color:#fda085;font-size:1.1em;margin-top:16px;font-weight:bold}
+.evolve-modal .desc{color:#8899aa;font-size:0.85em;margin-top:8px}
+.evolve-modal .close-btn{margin-top:20px;background:linear-gradient(135deg,#f093fb,#f5576c);border:none;border-radius:12px;padding:10px 30px;color:white;font-size:0.9em;cursor:pointer}
+
+/* 粒子效果 */
+.particle{position:fixed;pointer-events:none;z-index:300;font-size:20px;animation:particleUp 1.5s ease forwards}
+
+@keyframes petFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes petBounce{0%{transform:scale(1)}30%{transform:scale(1.3)}50%{transform:scale(0.9)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes petShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}}
+@keyframes petSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+@keyframes petGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5) drop-shadow(0 0 20px rgba(240,147,251,0.5))}}
+@keyframes petEvolve{0%{transform:scale(1);filter:brightness(1)}30%{transform:scale(0.5);filter:brightness(3)}60%{transform:scale(1.5);filter:brightness(2)}100%{transform:scale(1);filter:brightness(1)}}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes heartFloat{0%,100%{transform:translateY(0);opacity:1}50%{transform:translateY(-10px);opacity:0.6}}
+@keyframes cooldownBar{from{width:100%}to{width:0}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes toastOut{to{opacity:0;transform:translate(-50%,-20px)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes evolveModal{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes particleUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-100px) scale(0.5)}}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+<script>
+// ===== 数据定义 =====
+var STAGES = [
+  { lv:1,  emoji:'🥚', name:'神秘蛋', title:'沉睡的生命', desc:'一颗闪闪发光的蛋，里面似乎有什么在动...' },
+  { lv:3,  emoji:'🐣', name:'小绒球', title:'破壳而出', desc:'毛茸茸的小家伙，对一切都充满好奇！' },
+  { lv:7,  emoji:'🐥', name:'元气崽', title:'活力满满', desc:'开始到处跑跳，最喜欢和你玩！' },
+  { lv:12, emoji:'🦊', name:'灵狐', title:'灵动之姿', desc:'变得聪明又灵活，眼神里透着智慧。' },
+  { lv:18, emoji:'🦄', name:'独角兽', title:'幻光之角', desc:'额头长出水晶角，散发着梦幻光芒！' },
+  { lv:25, emoji:'🐉', name:'神龙', title:'九天翱翔', desc:'化身为龙！你是它最信赖的主人。' },
+  { lv:35, emoji:'🌟', name:'星灵', title:'星辰守护者', desc:'超越凡尘，化为星辰之灵，永远守护着你。' }
+];
+
+var ACHIEVEMENTS = [
+  {id:'first_feed', name:'初次投喂', icon:'🍎'},
+  {id:'feed_10', name:'投喂达人', icon:'🍽️'},
+  {id:'feed_50', name:'美食家', icon:'👨‍🍳'},
+  {id:'pet_10', name:'抚摸高手', icon:'🤗'},
+  {id:'pet_50', name:'亲密无间', icon:'💕'},
+  {id:'play_10', name:'玩伴', icon:'🎮'},
+  {id:'play_50', name:'超级玩伴', icon:'🎪'},
+  {id:'train_10', name:'训练师', icon:'💪'},
+  {id:'train_50', name:'大师', icon:'🏆'},
+  {id:'lv5', name:'初露锋芒', icon:'⭐'},
+  {id:'lv10', name:'渐入佳境', icon:'🌟'},
+  {id:'lv20', name:'炉火纯青', icon:'💫'},
+  {id:'lv35', name:'超凡入圣', icon:'✨'},
+  {id:'evolve_1', name:'第一次进化', icon:'🔄'},
+  {id:'evolve_all', name:'终极进化', icon:'👑'},
+  {id:'streak_3', name:'三日之约', icon:'📅'},
+  {id:'streak_7', name:'一周坚持', icon:'🗓️'},
+  {id:'streak_30', name:'月度陪伴', icon:'🏅'},
+  {id:'love_max', name:'满溢之爱', icon:'❤️'}
+];
+
+var QUAKUA = {
+  greet: [
+    '你来啦！今天也要一起开心地玩哦～✨',
+    '嘿嘿，最期待的人来啦！心情瞬间变好了！💖',
+    '哇哇哇！是你！好开心好开心！🌟',
+    '你终于来了，我可想你了呢～💕',
+    '今天也是因为你而变得特别的一天！☀️'
+  ],
+  feed: [
+    '好好吃！你是最会喂我的人了！😋',
+    '谢谢投喂！你对我真的好好哦～💖',
+    '哇好好吃！你是五星级饲养员！⭐',
+    '吃饱啦！有你照顾我真幸福～🥰',
+    '每一口都是爱的味道！谢谢你！💕'
+  ],
+  pet: [
+    '好舒服～你的手好温柔呀！🥰',
+    '嘿嘿嘿，再摸摸嘛，好喜欢被你抚摸～💕',
+    '被摸头好幸福！你是世界上最温柔的人！✨',
+    '呼噜噜～被你摸得好舒服，不想你停下来～💖',
+    '你的手心好温暖，感觉整颗心都被治愈了！🌸'
+  ],
+  play: [
+    '好好玩！和你在一起永远不无聊！🎉',
+    '哈哈哈太开心了！你是最棒的玩伴！🎮',
+    '玩得好开心！你就是快乐制造机！✨',
+    '和你玩的时候时间过得好快呀！🌈',
+    '嘻嘻，每次和你玩都有新的惊喜！💫'
+  ],
+  bath: [
+    '洗得好干净！香喷喷的～🧼',
+    '哇好舒服！你是最棒的洗澡师！💦',
+    '泡泡好多好开心！感觉自己焕然一新！✨',
+    '洗完澡好清爽！谢谢你把我照顾得这么好～🌟',
+    '被洗干净了，现在是最靓的崽！💖'
+  ],
+  train: [
+    '变强了！都是因为你教得好！💪',
+    '虽然累但是好有成就感！你是最好的教练！⭐',
+    '感觉自己在进步！谢谢你的耐心指导！✨',
+    '训练使我成长，你的陪伴让一切值得！🏆',
+    '又变厉害了一点点！都是你的功劳！🌟'
+  ],
+  sleep: [
+    '晚安～做个好梦，梦里有你哦！🌙',
+    '好困...但是好安心，因为你在身边...💤',
+    '呼噜噜...最幸福的入睡时刻...🛏️',
+    '在你身边睡觉好安心，你是最温暖的守护！✨',
+    '困了困了...明天见哦，最喜欢你了...💕'
+  ],
+  hungry: [
+    '肚子咕咕叫了...你什么时候来喂我呀？🥺',
+    '好饿好饿...你是不是忘记我了...😢',
+    '饿得前胸贴后背了，快来投喂我吧！🍎'
+  ],
+  dirty: [
+    '身上脏脏的...帮我洗个澡好不好？🥺',
+    '感觉不太干净了...你帮我洗洗嘛～💦',
+    '我需要洗个澡了，帮我变得香喷喷的吧！🧼'
+  ],
+  sad: [
+    '你好久没来了...我好想你...🥺',
+    '一个人好孤单...你能多陪陪我吗？😢',
+    '你不在的时候，我都在数星星等你回来...💫'
+  ],
+  happy: [
+    '今天超级开心！因为有你陪着我！💖',
+    '心情好到飞起！你就是我的快乐源泉！✨',
+    '幸福感爆棚！我一定是世界上最幸运的小家伙！🌈'
+  ],
+  evolve: [
+    '我进化了！！谢谢你把我养得这么好！你是最棒的！🎉',
+    '哇我变强了！这一切都因为你！你是最优秀的主人！✨',
+    '进化的光芒是我们的羁绊证明！谢谢你一直陪伴我！💖'
+  ],
+  checkin: [
+    '连续签到！你真的是最靠谱的人！📅',
+    '又来了又来了！你的坚持让我好感动！💕',
+    '每天都能见到你，是最幸福的事了！🌟'
+  ],
+  levelup: [
+    '升级了！我变强了一点点！都靠你！⭐',
+    '等级提升！我们的冒险又进一步了！🌟',
+    '哇升级了好开心！和你一起成长真好！✨'
+  ]
+};
+
+// ===== 状态管理 =====
+var KEY = 'cute_pet_save_v2';
+var state = null;
+var cooldowns = {};
+
+function defaultState() {
+  return {
+    name: '小萌宠',
+    level: 1,
+    exp: 0,
+    stage: 0,
+    hunger: 80,
+    happy: 80,
+    clean: 90,
+    energy: 100,
+    love: 10,
+    totalFeeds: 0,
+    totalPets: 0,
+    totalPlays: 0,
+    totalTrains: 0,
+    totalBaths: 0,
+    totalSleeps: 0,
+    totalDays: 0,
+    lastVisit: null,
+    lastDecay: Date.now(),
+    achievements: [],
+    logs: [],
+    createdAt: Date.now()
+  };
+}
+
+function expForLevel(lv) { return Math.floor(20 + lv * 8 + lv * lv * 0.5); }
+
+function getStage(lv) {
+  var s = 0;
+  for (var i = 0; i < STAGES.length; i++) {
+    if (lv >= STAGES[i].lv) s = i;
+  }
+  return s;
+}
+
+function getStageInfo() { return STAGES[state.stage]; }
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
+
+// ===== 存档 =====
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function load() {
+  try {
+    var d = localStorage.getItem(KEY);
+    if (d) { state = JSON.parse(d); return true; }
+  } catch(e) {}
+  return false;
+}
+
+function resetGame() {
+  if (confirm('确定要重新开始吗？所有进度将丢失！')) {
+    localStorage.removeItem(KEY);
+    state = null;
+    init();
+  }
+}
+
+// ===== 时间衰减 =====
+function applyDecay() {
+  var now = Date.now();
+  var elapsed = (now - state.lastDecay) / 1000; // 秒
+  if (elapsed < 60) return;
+  var minutes = elapsed / 60;
+  state.hunger = clamp(state.hunger - minutes * 0.15, 0, 100);
+  state.happy = clamp(state.happy - minutes * 0.08, 0, 100);
+  state.clean = clamp(state.clean - minutes * 0.06, 0, 100);
+  state.energy = clamp(state.energy - minutes * 0.03, 0, 100);
+  state.lastDecay = now;
+}
+
+// ===== 经验与升级 =====
+function addExp(amount) {
+  state.exp += amount;
+  var needed = expForLevel(state.level);
+  var leveled = false;
+  while (state.exp >= needed) {
+    state.exp -= needed;
+    state.level++;
+    leveled = true;
+    addLog('🎉 升级！达到 Lv.' + state.level);
+    showToast('🎉 升级到 Lv.' + state.level + '！');
+    // 检查进化
+    var newStage = getStage(state.level);
+    if (newStage > state.stage) {
+      var oldStage = state.stage;
+      state.stage = newStage;
+      unlockAchieve('evolve_1');
+      if (newStage === STAGES.length - 1) unlockAchieve('evolve_all');
+      setTimeout(function() { showEvolve(STAGES[oldStage], STAGES[newStage]); }, 500);
+    }
+    needed = expForLevel(state.level);
+  }
+  if (leveled) {
+    say('levelup');
+    checkLevelAchievements();
+  }
+}
+
+// ===== 成就 =====
+function unlockAchieve(id) {
+  if (state.achievements.indexOf(id) >= 0) return;
+  state.achievements.push(id);
+  var a = ACHIEVEMENTS.find(function(x) { return x.id === id; });
+  if (a) showToast(a.icon + ' 解锁成就：' + a.name);
+}
+
+function checkLevelAchievements() {
+  if (state.level >= 5) unlockAchieve('lv5');
+  if (state.level >= 10) unlockAchieve('lv10');
+  if (state.level >= 20) unlockAchieve('lv20');
+  if (state.level >= 35) unlockAchieve('lv35');
+}
+
+function checkActionAchievements() {
+  if (state.totalFeeds >= 1) unlockAchieve('first_feed');
+  if (state.totalFeeds >= 10) unlockAchieve('feed_10');
+  if (state.totalFeeds >= 50) unlockAchieve('feed_50');
+  if (state.totalPets >= 10) unlockAchieve('pet_10');
+  if (state.totalPets >= 50) unlockAchieve('pet_50');
+  if (state.totalPlays >= 10) unlockAchieve('play_10');
+  if (state.totalPlays >= 50) unlockAchieve('play_50');
+  if (state.totalTrains >= 10) unlockAchieve('train_10');
+  if (state.totalTrains >= 50) unlockAchieve('train_50');
+  if (state.love >= 100) unlockAchieve('love_max');
+  if (state.totalDays >= 3) unlockAchieve('streak_3');
+  if (state.totalDays >= 7) unlockAchieve('streak_7');
+  if (state.totalDays >= 30) unlockAchieve('streak_30');
+}
+
+// ===== 对话 =====
+var currentDialog = '';
+
+function say(type) {
+  currentDialog = rand(QUAKUA[type] || QUAKUA.greet);
+}
+
+function getIdleDialog() {
+  if (state.hunger < 20) return rand(QUAKUA.hungry);
+  if (state.clean < 20) return rand(QUAKUA.dirty);
+  if (state.happy < 20) return rand(QUAKUA.sad);
+  if (state.happy > 70 && state.hunger > 50) return rand(QUAKUA.happy);
+  return rand(QUAKUA.greet);
+}
+
+// ===== 互动操作 =====
+function doAction(type) {
+  if (cooldowns[type]) return;
+  cooldowns[type] = true;
+  setTimeout(function() { cooldowns[type] = false; render(); }, 3000);
+
+  var petEl = document.querySelector('.pet-display');
+  switch (type) {
+    case 'feed':
+      state.hunger = clamp(state.hunger + 20, 0, 100);
+      state.happy = clamp(state.happy + 5, 0, 100);
+      state.totalFeeds++;
+      addExp(5);
+      say('feed');
+      if (petEl) petEl.classList.add('bounce');
+      spawnParticles('🍎', 5);
+      addLog('🍎 投喂了美味的苹果');
+      break;
+    case 'pet':
+      state.happy = clamp(state.happy + 15, 0, 100);
+      state.love = clamp(state.love + 2, 0, 100);
+      state.totalPets++;
+      addExp(3);
+      say('pet');
+      if (petEl) petEl.classList.add('shake');
+      spawnParticles('💕', 6);
+      addLog('🤗 温柔地抚摸了' + state.name);
+      break;
+    case 'play':
+      if (state.energy < 15) { showToast('⚡ 精力不足，先休息一下吧！'); cooldowns[type]=false; render(); return; }
+      state.happy = clamp(state.happy + 20, 0, 100);
+      state.energy = clamp(state.energy - 15, 0, 100);
+      state.hunger = clamp(state.hunger - 5, 0, 100);
+      state.love = clamp(state.love + 3, 0, 100);
+      state.totalPlays++;
+      addExp(8);
+      say('play');
+      if (petEl) petEl.classList.add('spin');
+      spawnParticles('🎉', 8);
+      addLog('🎮 和' + state.name + '开心地玩耍');
+      break;
+    case 'bath':
+      state.clean = clamp(state.clean + 30, 0, 100);
+      state.happy = clamp(state.happy + 8, 0, 100);
+      state.totalBaths++;
+      addExp(4);
+      say('bath');
+      if (petEl) petEl.classList.add('bounce');
+      spawnParticles('🫧', 8);
+      addLog('🛁 给' + state.name + '洗了香香的澡');
+      break;
+    case 'train':
+      if (state.energy < 20) { showToast('⚡ 精力不足，先休息一下吧！'); cooldowns[type]=false; render(); return; }
+      state.energy = clamp(state.energy - 20, 0, 100);
+      state.hunger = clamp(state.hunger - 8, 0, 100);
+      state.love = clamp(state.love + 2, 0, 100);
+      state.totalTrains++;
+      addExp(12);
+      say('train');
+      if (petEl) petEl.classList.add('glow');
+      spawnParticles('⭐', 6);
+      addLog('💪 和' + state.name + '进行了训练');
+      break;
+    case 'sleep':
+      state.energy = clamp(state.energy + 40, 0, 100);
+      state.happy = clamp(state.happy + 5, 0, 100);
+      state.love = clamp(state.love + 1, 0, 100);
+      state.totalSleeps++;
+      addExp(2);
+      say('sleep');
+      if (petEl) petEl.classList.add('glow');
+      spawnParticles('💤', 4);
+      addLog('💤 ' + state.name + '美美地睡了一觉');
+      break;
+  }
+  checkActionAchievements();
+  save();
+  setTimeout(function() {
+    if (petEl) petEl.classList.remove('bounce','shake','spin','glow');
+    render();
+  }, 800);
+}
+
+// ===== 日志 =====
+function addLog(msg) {
+  var now = new Date();
+  var time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  state.logs.unshift({ time: time, msg: msg });
+  if (state.logs.length > 30) state.logs.length = 30;
+}
+
+// ===== 签到 =====
+function checkin() {
+  var today = todayStr();
+  if (state.lastVisit === today) { showToast('今天已经签到过了哦～'); return; }
+  state.totalDays++;
+  state.lastVisit = today;
+  var bonus = Math.min(state.totalDays, 10);
+  state.hunger = clamp(state.hunger + 10, 0, 100);
+  state.happy = clamp(state.happy + 10, 0, 100);
+  state.love = clamp(state.love + 3, 0, 100);
+  addExp(10 + bonus * 2);
+  say('checkin');
+  addLog('📅 第' + state.totalDays + '天签到！获得经验奖励！');
+  showToast('📅 签到成功！连续' + state.totalDays + '天！');
+  checkActionAchievements();
+  save();
+  render();
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  var old = document.querySelector('.toast');
+  if (old) old.remove();
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.classList.add('out'); }, 2000);
+  setTimeout(function() { el.remove(); }, 2300);
+}
+
+// ===== 粒子 =====
+function spawnParticles(emoji, count) {
+  for (var i = 0; i < count; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var el = document.createElement('div');
+        el.className = 'particle';
+        el.textContent = emoji;
+        el.style.left = (30 + Math.random() * 40) + '%';
+        el.style.top = (20 + Math.random() * 30) + '%';
+        document.body.appendChild(el);
+        setTimeout(function() { el.remove(); }, 1500);
+      }, idx * 100);
+    })(i);
+  }
+}
+
+// ===== 进化弹窗 =====
+function showEvolve(oldS, newS) {
+  var overlay = document.createElement('div');
+  overlay.className = 'evolve-overlay';
+  overlay.innerHTML = '<div class="evolve-modal">' +
+    '<div class="old">' + oldS.emoji + '</div>' +
+    '<div class="arrow">✨ 进化 ✨</div>' +
+    '<div class="new">' + newS.emoji + '</div>' +
+    '<div class="text">' + state.name + ' 进化为 ' + newS.name + '！</div>' +
+    '<div class="desc">' + newS.desc + '</div>' +
+    '<button class="close-btn" onclick="this.parentElement.parentElement.remove()">太棒了！</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  say('evolve');
+  render();
+}
+
+// ===== 渲染 =====
+function render() {
+  var stg = getStageInfo();
+  var expNeeded = expForLevel(state.level);
+  var expPct = (state.exp / expNeeded * 100).toFixed(1);
+  var today = todayStr();
+  var canCheckin = state.lastVisit !== today;
+  var dialog = currentDialog || getIdleDialog();
+
+  var moodText = '😊 心情不错';
+  if (state.happy < 20) moodText = '😢 很不开心';
+  else if (state.happy < 40) moodText = '😐 有点无聊';
+  else if (state.happy < 60) moodText = '🙂 还行吧';
+  else if (state.happy < 80) moodText = '😊 心情不错';
+  else moodText = '🤩 超级开心！';
+
+  if (state.hunger < 20) moodText = '😫 好饿...';
+  if (state.energy < 15) moodText = '😴 好困...';
+  if (state.clean < 20) moodText = '🤢 脏兮兮的...';
+
+  var html = '';
+  // 标题
+  html += '<h1>🐾 萌宠养成日记</h1>';
+  html += '<div class="subtitle">每天来陪陪你的小伙伴吧～</div>';
+  html += '<div class="day-badge">你们已经相伴 <span>' + state.totalDays + '</span> 天</div>';
+
+  // 签到
+  html += '<div class="checkin">';
+  html += '<div class="checkin-info">📅 连续签到 <span class="streak">' + state.totalDays + '</span> 天<br><small style="color:#667">每日签到获得经验奖励</small></div>';
+  html += '<button class="checkin-btn" onclick="checkin()"' + (canCheckin ? '' : ' disabled') + '>' + (canCheckin ? '签到领奖励' : '已签到 ✓') + '</button>';
+  html += '</div>';
+
+  // 宠物展示
+  html += '<div class="pet-stage">';
+  html += '<div class="pet-display" onclick="doAction(\'pet\')">' + stg.emoji + '</div>';
+  html += '<div class="pet-name">' + state.name + '</div>';
+  html += '<div class="pet-title">' + stg.title + ' · ' + stg.name + '</div>';
+  html += '<div class="pet-mood">' + moodText + '</div>';
+  html += '</div>';
+
+  // 对话气泡
+  html += '<div class="bubble-wrap">';
+  html += '<div class="bubble"><div class="hearts">💕</div><div class="bubble-text">' + dialog + '</div></div>';
+  html += '</div>';
+
+  // 等级经验
+  html += '<div class="exp-bar-wrap">';
+  html += '<div class="exp-header"><span class="lv">Lv.' + state.level + '</span><span>' + state.exp + ' / ' + expNeeded + '</span></div>';
+  html += '<div class="exp-bar"><div class="exp-fill" style="width:' + expPct + '%"></div></div>';
+  html += '</div>';
+
+  // 状态条
+  html += '<div class="stats-grid">';
+  html += statBar('🍎 饱食', state.hunger, 'hunger');
+  html += statBar('😊 心情', state.happy, 'happy');
+  html += statBar('🫧 干净', state.clean, 'clean');
+  html += statBar('⚡ 精力', state.energy, 'energy');
+  html += statBar('💕 亲密', state.love, 'love');
+  html += statBar('✨ 经验', expPct, 'exp');
+  html += '</div>';
+
+  // 操作按钮
+  html += '<div class="actions">';
+  html += actionBtn('feed', '🍎', '投喂');
+  html += actionBtn('pet', '🤗', '抚摸');
+  html += actionBtn('play', '🎮', '玩耍');
+  html += actionBtn('bath', '🛁', '洗澡');
+  html += actionBtn('train', '💪', '训练');
+  html += actionBtn('sleep', '💤', '睡觉');
+  html += '</div>';
+
+  // 成就
+  html += '<div class="achieve-section">';
+  html += '<div class="achieve-title">🏆 成就 (' + state.achievements.length + '/' + ACHIEVEMENTS.length + ')</div>';
+  html += '<div class="achieve-list">';
+  ACHIEVEMENTS.forEach(function(a) {
+    var unlocked = state.achievements.indexOf(a.id) >= 0;
+    html += '<span class="achieve-badge' + (unlocked ? ' unlocked' : '') + '" title="' + a.name + '">' + a.icon + ' ' + (unlocked ? a.name : '???') + '</span>';
+  });
+  html += '</div></div>';
+
+  // 日志
+  html += '<div class="log-section">';
+  html += '<div class="log-title">📝 互动日志</div>';
+  html += '<div class="log-list">';
+  if (state.logs.length === 0) {
+    html += '<div class="log-entry">还没有记录哦～</div>';
+  } else {
+    state.logs.slice(0, 15).forEach(function(log) {
+      html += '<div class="log-entry"><span class="log-time">[' + log.time + ']</span> ' + log.msg + '</div>';
+    });
+  }
+  html += '</div></div>';
+
+  // 重置
+  html += '<button class="reset-btn" onclick="resetGame()">🔄 重新开始</button>';
+
+  document.getElementById('app').innerHTML = html;
+}
+
+function statBar(label, value, cls) {
+  var v = typeof value === 'number' ? Math.round(value) : value;
+  var w = typeof value === 'number' ? value : value;
+  return '<div class="stat-item"><div class="stat-label"><span>' + label + '</span><span>' + v + (typeof value==='number'?'%':'%') + '</span></div><div class="stat-bar"><div class="stat-fill ' + cls + '" style="width:' + w + '%"></div></div></div>';
+}
+
+function actionBtn(id, icon, label) {
+  var cd = cooldowns[id] ? ' cooldown' : '';
+  var dis = cooldowns[id] ? ' disabled' : '';
+  return '<div class="act-btn' + cd + '" onclick="doAction(\'' + id + '\')"' + dis + '><span class="icon">' + icon + '</span><span class="label">' + label + '</span></div>';
+}
+
+// ===== 初始化 =====
+function init() {
+  var loaded = load();
+  if (!loaded) {
+    state = defaultState();
+    say('greet');
+    addLog('🌟 ' + state.name + '来到了你的身边！');
+    save();
+  } else {
+    applyDecay();
+    // 检查离线天数
+    if (state.lastVisit) {
+      var today = todayStr();
+      if (state.lastVisit !== today) {
+        var missed = state.hunger < 20 || state.happy < 20;
+        if (missed) say('sad');
+        else say('greet');
+      } else {
+        say('greet');
+      }
+    } else {
+      say('greet');
+    }
+  }
+  render();
+  // 每30秒自动衰减和刷新对话
+  setInterval(function() {
+    applyDecay();
+    save();
+    render();
+  }, 30000);
+}
+
+init();
+</script>
+</body>
+</html>
