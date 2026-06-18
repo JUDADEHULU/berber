@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>美食城奇遇记</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a120b;--card:rgba(255,248,240,0.07);--border:rgba(255,180,80,0.2);--accent:#ffb347;--accent2:#ff8c42;--text:#fff8f0;--text2:#c8b8a8;--success:#66bb6a;--glow:rgba(255,179,71,0.3)}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;min-height:100vh;background:var(--bg);background-image:radial-gradient(ellipse at 30% 10%,rgba(255,140,50,0.1) 0%,transparent 50%),radial-gradient(ellipse at 70% 90%,rgba(180,80,20,0.08) 0%,transparent 50%);overflow-x:hidden;color:var(--text)}
+.screen{display:none;max-width:640px;width:92%;margin:20px auto;padding:28px 22px;background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:20px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:fadeIn .5s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+h1{text-align:center;font-size:1.7em;color:var(--accent);text-shadow:0 0 20px var(--glow);margin-bottom:8px}
+h2{text-align:center;font-size:1.15em;color:var(--accent);margin-bottom:14px}
+.sub{text-align:center;color:var(--text2);font-size:.88em;margin-bottom:20px}
+input[type="text"]{width:100%;padding:11px 15px;border:2px solid rgba(255,180,80,0.3);border-radius:10px;background:rgba(255,255,255,0.05);color:var(--text);font-size:1em;outline:none;margin-bottom:10px;transition:border-color .3s}
+input[type="text"]:focus{border-color:var(--accent)}
+input[type="text"]::placeholder{color:rgba(200,184,168,0.4)}
+.btn{display:inline-block;padding:11px 24px;border:2px solid var(--accent);border-radius:12px;background:rgba(255,179,71,0.1);color:var(--accent);font-size:1em;cursor:pointer;transition:all .3s;text-align:center;min-height:48px;user-select:none}
+.btn:hover{background:rgba(255,179,71,0.25);transform:scale(1.03)}
+.btn:active{transform:scale(0.97)}
+.btn-full{width:100%;margin-bottom:8px}
+.btn-sm{padding:8px 18px;font-size:.88em;min-height:36px}
+.btn-outline{border-color:var(--text2);color:var(--text2);background:transparent}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-success{border-color:var(--success);color:var(--success);background:rgba(102,187,106,0.1)}
+.story-box{font-size:.95em;line-height:1.85;color:var(--text);padding:14px;margin-bottom:16px;background:rgba(255,255,255,0.03);border-radius:12px;border-left:3px solid var(--accent)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{padding:14px 18px;border:2px solid rgba(255,180,80,0.25);border-radius:14px;background:rgba(255,180,80,0.05);cursor:pointer;transition:all .3s}
+.opt:hover{background:rgba(255,180,80,0.15);border-color:var(--accent);transform:translateX(5px)}
+.opt.picked{border-color:var(--success);background:rgba(102,187,106,0.12);transform:none}
+.opt.off{opacity:.4;pointer-events:none}
+.opt.partner{border-color:rgba(255,180,80,0.4);background:rgba(255,179,71,0.08);cursor:default;pointer-events:none;opacity:.75}
+.opt-title{font-weight:bold;color:var(--accent);margin-bottom:3px;font-size:1em}
+.opt.picked .opt-title{color:var(--success)}
+.opt-desc{color:var(--text2);font-size:.85em;line-height:1.5}
+.opt-icon{font-size:1.2em;margin-right:5px}
+.code-box{text-align:center;font-size:2.2em;font-weight:bold;letter-spacing:8px;color:var(--accent);padding:16px;background:rgba(255,179,71,0.08);border-radius:12px;margin:12px 0;border:2px dashed rgba(255,179,71,0.3)}
+.code-row{display:flex;gap:8px;margin:8px 0}
+.code-row input{flex:1;margin:0;text-transform:uppercase;text-align:center;font-size:1.1em;letter-spacing:3px}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78em;font-weight:bold}
+.tag-a{background:rgba(255,179,71,0.15);color:var(--accent)}
+.tag-b{background:rgba(255,140,66,0.15);color:var(--accent2)}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,180,80,0.2),transparent);margin:14px 0}
+.stat-bar{display:flex;gap:10px;padding:8px 12px;background:rgba(0,0,0,0.25);border-radius:10px;margin-bottom:14px;font-size:.82em;flex-wrap:wrap}
+.stat-bar .si{color:var(--text2)}.stat-bar .sv{color:var(--accent);font-weight:bold}
+.round-hd{text-align:center;margin-bottom:12px}
+.round-hd .num{color:var(--accent);font-size:.85em;font-weight:bold}
+.round-hd .ttl{color:var(--text);font-size:1.15em;font-weight:bold;margin-top:2px}
+.outcome-box{padding:14px;margin:12px 0;border-radius:12px;border:1px solid rgba(102,187,106,0.3);background:rgba(102,187,106,0.06)}
+.outcome-box h3{color:var(--success);font-size:1.05em;margin-bottom:6px}
+.outcome-box p{color:var(--text);font-size:.9em;line-height:1.7}
+.outcome-box .item-tag{display:inline-block;margin-top:6px;padding:3px 10px;background:rgba(255,179,71,0.12);border-radius:8px;color:var(--accent);font-size:.82em}
+.stat-change{color:var(--success);font-size:.82em;margin-top:4px}
+.result-card{text-align:center;padding:24px 18px;border:2px solid var(--accent);border-radius:16px;background:linear-gradient(135deg,rgba(255,179,71,0.08),rgba(255,140,66,0.05));animation:rIn .6s ease}
+@keyframes rIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.result-title{font-size:1.5em;color:var(--accent);margin-bottom:10px;text-shadow:0 0 20px var(--glow)}
+.result-text{font-size:1em;line-height:1.85;color:var(--text);white-space:pre-line}
+.items-list{margin:14px 0;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;text-align:left}
+.items-list .it{padding:4px 0;color:var(--text2);font-size:.85em}
+.items-list .it span{color:var(--accent)}
+.final-stats{display:flex;gap:8px;margin:14px 0}
+.fs{text-align:center;flex:1;padding:10px;background:rgba(255,255,255,0.03);border-radius:10px}
+.fs .fv{font-size:1.6em;color:var(--accent);font-weight:bold}
+.fs .fl{font-size:.75em;color:var(--text2);margin-top:2px}
+.fs .fb{height:4px;background:rgba(255,180,80,0.15);border-radius:2px;margin-top:6px;overflow:hidden}
+.fs .fb-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .6s ease}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:10px 22px;background:rgba(255,179,71,0.95);color:#1a120b;border-radius:10px;font-weight:bold;z-index:100;display:none;animation:tIn .3s ease;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.how{background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin:14px 0;font-size:.85em;color:var(--text2);line-height:1.8}
+.how b{color:var(--accent)}
+.round-dots{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.rd{width:8px;height:8px;border-radius:50%;background:rgba(255,180,80,0.15)}
+.rd.done{background:var(--success)}.rd.cur{background:var(--accent);box-shadow:0 0 6px var(--glow);width:20px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="screen active" id="s-welcome">
+<h1>🍜 美食城奇遇记</h1>
+<p class="sub">双人互动美食冒险 · 5轮剧情 · 9种结局</p>
+<div class="divider"></div>
+<div class="story-box">你们站在巨大的拱门前，门上刻着两幅浮雕：一口沸腾的大锅、一把古老的钥匙。守门机器人胸口闪烁："欢迎来到万象美食城。请证明你们值得进入。"</div>
+<div class="how"><b>🎮 怎么玩？</b><br>
+① <b>玩家A</b> 先完成5轮选择，生成口令码<br>
+② 把口令码发给 <b>玩家B</b>（微信/QQ）<br>
+③ <b>玩家B</b> 输入口令码，看到A每轮的选择后再做决定<br>
+④ 揭晓你们的专属结局！（共9种）</div>
+<button class="btn btn-full" onclick="goName()">🚀 开始冒险</button>
+<div class="divider"></div>
+<p style="color:var(--text2);font-size:.85em;text-align:center;margin-bottom:6px">你是玩家B？输入口令码加入：</p>
+<input type="text" id="home-name" placeholder="你的昵称" maxlength="8">
+<div class="code-row"><input type="text" id="home-code" placeholder="输入口令码" maxlength="6"><button class="btn btn-success btn-sm" onclick="joinB()">加入</button></div>
+</div>
+
+<div class="screen" id="s-game"><div id="game"></div></div>
+<div class="screen" id="s-end"><div id="end"></div></div>
+
+<script>
+// ========== 数据 ==========
+var ROUNDS=[
+{id:1,title:'城门广场',story:'你们站在巨大的拱门前，门上刻着两幅浮雕：一口沸腾的大锅、一把古老的钥匙。守门机器人胸口闪烁："欢迎来到万象美食城。请证明你们值得进入。"',
+optA:[{t:'研究浮雕',d:'你凑近大锅浮雕，发现锅底刻着小字："五味调和，百味始生。"'}],
+optB:[{t:'寻找暗门',d:'你绕着城墙走，发现一块砖松动，后面藏着半张纸条。'},{t:'大声呼喊',d:'你朝门内大喊"有人吗？"，门缝里滚出一个包裹。'}]},
+{id:2,title:'香料老街',story:'一条窄巷，两旁堆满麻袋，空气中弥漫肉桂和花椒的混合气味。只有两家店亮着灯笼：左边是红灯笼店，飘出辛辣气息；右边是绿灯笼店，散发清新草本香。',
+optA:[{t:'走进红灯笼店',d:'店内挂满辣椒串，老板是个红脸大叔，正在表演吞火。'},{t:'走进绿灯笼店',d:'货架上摆满薄荷、紫苏、迷迭香，空气清凉提神。'}],
+optB:[{t:'跟着蝴蝶走',d:'一只蓝色蝴蝶从你眼前飞过，消失在巷子深处。'},{t:'拿起路边试吃的饼干',d:'托盘上放着一小块饼干，你咬了一口，瞬间感觉舌头被电流击中——是芥末味的！'}]},
+{id:3,title:'地下厨房',story:'地下二层是一个巨大的开放式厨房，炉火熊熊，案板上堆满新鲜食材。墙上贴着告示："合作烹饪一道菜，方可进入下一层。"',
+optA:[{t:'负责切配',d:'你拿起菜刀，手法娴熟地将胡萝卜、青椒、洋葱切成均匀薄片。'},{t:'负责调味',d:'你拿起瓶瓶罐罐，凭记忆调配酱汁，边尝边加料。'}],
+optB:[{t:'负责摆盘',d:'你将切好的食材精心排列，摆成孔雀开屏的形状。'},{t:'负责试吃',d:'每道工序你都尝一口，然后认真提出改进意见。'}]},
+{id:4,title:'天空露台',story:'顶层露台正在举办"美食交换大会"。各国厨师摆出自家招牌菜，人们穿梭其中，用食物交换食物。远处能看到美食城的全貌，夕阳染红了天际。',
+optA:[{t:'用自制点心换异国菜',d:'你端着第三轮做的菜，走向一位印度厨师，想交换他的咖喱角。'},{t:'参加限时大胃王比赛',d:'报名处挂着横幅："5分钟吃汉堡大赛，冠军奖券一张！"'}],
+optB:[{t:'用情报换稀有食材',d:'你听到一位老奶奶在抱怨藏红花太贵，你告诉她"楼下有家店正在打折"。'},{t:'主动帮摊主招呼客人',d:'你见一家摊位冷清，便热情帮忙吆喝起来。'}]},
+{id:5,title:'终极殿堂',story:'圆形餐厅悬浮在空中，透过玻璃地板可以看到整个美食城的灯火。白发老者坐在长桌尽头，面前只有一个空盘子。他微笑着开口：\n"你们经历了四关，收获了印记、道具和回忆。现在，请告诉我——你们心中最想创造的一道菜是什么？"',
+optA:[{t:'追求极致味道',d:'"我想做一道融合酸甜苦辣咸的菜，让每一口都有惊喜。"'},{t:'追求故事与情怀',d:'"我想做一道家乡菜，里面有我童年的记忆和家人的爱。"'}],
+optB:[{t:'强调食材本真',d:'"我只用最新鲜的食材，不加多余调料，让食物自己说话。"'},{t:'强调分享与快乐',d:'"这道菜要让所有人一起吃，大家一起欢笑才是最美味的。"'}]}
+];
+
+var OUTCOMES={
+'1-00':{t:'调和之心',p:'你研究浮雕的文字，B找到半张纸条，上面写着"真心为引"。两人一合计，拼出完整谜底："五味调和，需以真心为引。"话音刚落，大门轰然开启。',item:'调和之心',s:[2,1,0]},
+'1-01':{t:'幸运馒头',p:'你还在琢磨浮雕时，B的大喊惊动了守卫。守卫跑过来，见你们一脸茫然，叹了口气："又是迷路的游客吧？跟我来。"他从侧门带你们进入，并塞给每人一个热腾腾的馒头。',item:'幸运馒头',s:[1,2,0]},
+'1-10':{t:'密道行者',p:'你硬闯触发机关，小门弹开的同时B找到了纸条。你们钻进门，发现里面是一条密道，墙壁上画满美食涂鸦。出口处有个老奶奶在熬汤，她慈祥地舀了两碗递给你们。',item:'密道行者',s:[0,0,2]},
+'1-11':{t:'欢乐共鸣',p:'你推门的巨响和B的呼喊形成共振，门竟然自己震开了一条缝。你们挤进去，发现门后是个游乐场，所有设施都是食物做的——旋转寿司车、棉花糖蹦床、巧克力滑梯。',item:'欢乐共鸣',s:[0,2,1]},
+'2-00':{t:'辣味奇缘',p:'A走进红灯笼店，B跟着蝴蝶绕到店后院。蝴蝶停在了一株火红的植物上——原来是辣椒精变的。老板追出来，看见你们识破了他的秘密，哈哈大笑："有缘人！这瓶秘制辣油送给你们。"',item:'秘制辣油',s:[2,1,0]},
+'2-01':{t:'冰火两重天',p:'A在红灯笼店看吞火表演，B吃了芥末饼干后被辣得直跺脚，冲进红灯笼店找水喝。老板见状大笑，端出两杯特饮——一半红一半白。你们喝下，先是火烧般的灼热，随即清凉直冲天灵盖。',item:'冰火两重天套餐',s:[1,2,0]},
+'2-10':{t:'香草秘境',p:'A走进绿灯笼店，B跟着蝴蝶来到隔壁的秘密花园。蝴蝶落在一株泛着银光的植物上——是罕见的香蜂草。店主说："这草泡茶能让人心情愉悦一整天。"你们采摘了一些带走。',item:'香蜂草',s:[0,0,2]},
+'2-11':{t:'清新友谊',p:'A在绿灯笼店挑选香草，B被芥末辣得冲进来。A赶紧递上一杯薄荷茶，B一饮而尽，长舒一口气。两人相视而笑，店主被你们的友情打动，送了一罐综合香草礼盒。',item:'香草礼盒',s:[0,2,1]},
+'3-00':{t:'完美搭档',p:'A刀工精湛，食材厚薄一致；B摆盘艺术，宛如一幅画。成品端出时，连旁边的厨师都鼓掌。你们配合得天衣无缝。',item:'精美菜品',s:[2,1,0]},
+'3-01':{t:'味觉校正',p:'A埋头切菜，B逐一试吃后皱起眉头："盐少了，醋多了。"A立刻调整，最终成品咸淡适中，口感平衡。虽然过程有些波折，但结果令人满意。',item:'改良菜品',s:[1,2,0]},
+'3-10':{t:'风格碰撞',p:'A调制的酱汁颜色深红，B却用浅色食材摆出清淡雅致的造型。两者放在一起略显违和，你们紧急调整，用绿叶点缀总算挽回局面。',item:'勉强过关的菜品',s:[0,0,2]},
+'3-11':{t:'灵魂共鸣',p:'A调酱，B试吃，两人反复沟通："再加一点蒜？""我觉得需要酸味提鲜。"经过七八次调整，酱汁终于达到完美平衡。你们击掌庆祝，仿佛认识了多年的老友。',item:'灵魂菜品',s:[0,2,1]},
+'4-00':{t:'跨国风味',p:'A用菜品换到了金黄酥脆的咖喱角，B用情报换来一罐珍贵的松露。你们坐在露台边缘，一边品尝异国美味，一边看着夕阳落下。',item:'咖喱角+松露',s:[2,1,0]},
+'4-01':{t:'人气组合',p:'A换到咖喱角，B帮忙吆喝的摊位突然火爆起来，摊主感激地送你们一张"免排队金牌"。你们可以在任何摊位优先购买。',item:'咖喱角+免排队金牌',s:[1,2,0]},
+'4-10':{t:'丰收时刻',p:'A拼命吃完五个汉堡，赢得大胃王比赛奖券；B用情报换到松露。奖券可以在终极殿堂兑换一份隐藏菜单。',item:'奖券+松露',s:[0,0,2]},
+'4-11':{t:'露台明星',p:'A赢得大胃王比赛，周围人群欢呼；B的吆喝声吸引了更多人围观。你们成了露台上的焦点，有人给你们拍照，有人找你们合影。',item:'奖券+免排队金牌',s:[0,2,1]},
+'5-00':{t:'食神眷侣',p:'老者闭目聆听，缓缓点头："你们追求味道的极致，又不失对食材的尊重。美食城需要这样的人。"他站起身，将两枚金色徽章别在你们胸前。"从今天起，你们是万象美食城的联合城主。"',item:'城主徽章',s:[0,0,0]},
+'5-01':{t:'温暖小店',p:'老者听完，眼中泛起温柔的光："极致味道固然重要，但让更多人吃到才是美食的意义。"他指向窗外的一条小巷："那里有一间空了很久的小店，送你们了。"',item:'小店钥匙',s:[0,0,0]},
+'5-10':{t:'流浪美食家',p:'老者沉默片刻，忽然笑了："家乡菜是最难复制的，因为它不只靠手艺，还靠记忆。"他拿出一本泛黄的笔记本："这是我年轻时环游世界的食谱笔记，送给你们。"',item:'食谱笔记',s:[0,0,0]},
+'5-11':{t:'全能传奇',p:'老者听完，站起身来郑重鼓掌："技艺、情谊、冒险，你们三者兼备。"他按下桌上的按钮，地板裂开，一座雕像缓缓升起——正是你们两人的形象。',item:'美食城雕像',s:[0,0,0]}
+};
+
+var ENDINGS=[
+{id:'食神眷侣',cond:function(s){return s[0]>=6&&s[1]>=5},t:'「食神眷侣」',p:'老者闭目聆听，缓缓点头："你们追求味道的极致，又不失对食材的尊重。美食城需要这样的人。"他站起身，将两枚金色徽章别在你们胸前。\n\n"从今天起，你们是万象美食城的联合城主，负责研发新菜品。"你们相视一笑，从此开启了属于你们的美食传奇。'},
+{id:'温暖小店',cond:function(s){return s[1]>=6&&s[0]<=3},t:'「温暖小店」',p:'老者听完，眼中泛起温柔的光："极致味道固然重要，但让更多人吃到才是美食的意义。"他指向窗外的一条小巷："那里有一间空了很久的小店，送你们了。"\n\n你们在那里开了一家只接待熟客的家庭餐馆，每天都有老朋友带着新朋友来吃饭。'},
+{id:'流浪美食家',cond:function(s){return s[2]>=6&&s[0]>=4},t:'「流浪美食家」',p:'老者沉默片刻，忽然笑了："家乡菜是最难复制的，因为它不只靠手艺，还靠记忆。"他拿出一本泛黄的笔记本："这是我年轻时环游世界的食谱笔记，送给你们。去吧，去寻找属于你们自己的味道。"\n\n你们接过笔记，踏上寻找失传食谱的旅途。'},
+{id:'全能传奇',cond:function(s){return s[0]>=4&&s[1]>=4&&s[2]>=4},t:'「全能传奇」',p:'老者听完，站起身来郑重鼓掌："技艺、情谊、冒险，你们三者兼备。我活了八十年，很少见到这样的组合。"他按下桌上的按钮，地板裂开，一座雕像缓缓升起——正是你们两人的形象。\n\n"这是美食城最高的荣誉，你们当之无愧。"你们的名字被刻在了广场中央的纪念碑上。'},
+{id:'洗碗二人组',cond:function(s){return s[0]<=2&&s[1]<=2&&s[2]<=2},t:'「洗碗二人组」',p:'老者无奈摇头："你们的心意我收到了，但手艺还需磨练。"他打了个响指，两个围裙飞过来套在你们身上。"后厨缺人手，你们去洗一个月盘子吧。"\n\n你们本以为这是惩罚，却在洗碗间偷学到了老师傅们的独门秘籍，一个月后逆袭成为隐藏高手。'},
+{id:'黑暗料理王',cond:function(s){return s[0]>=5&&s[2]>=5&&s[1]<=2},t:'「黑暗料理王」',p:'你们描述的菜品过于激进，老者皱眉："这种菜会让食客产生幻觉，美食城不能冒这个险。"他没收了你们的道具，将你们列入黑名单。\n\n但你们并不气馁，在城外开了一家地下餐厅，专为寻求刺激的食客服务，成为传说中的黑暗料理王。'},
+{id:'义气江湖',cond:function(s){return s[1]>=7&&s[2]>=3},t:'「义气江湖」',p:'老者正要宣布结果，一个年轻人冲进来喊道："爸！我被困在地下室了！"原来他是老者的儿子，你们之前在密道见过的那个厨师。你们毫不犹豫地把所有道具拿出来帮他脱困。\n\n老者感动不已，授予你们美食城永久VIP资格，终身免单。'},
+{id:'网红达人',cond:function(s){return s[0]<=2&&s[2]>=5&&s[1]>=3},t:'「网红达人」',p:'你们描述菜品时手舞足蹈，充满戏剧性。老者忍俊不禁："你们不适合当厨师，但很适合当主播。"\n\n他帮你们在美食城开设了直播专区，你们靠试吃、搞怪、互动迅速走红，成为美食城最有人气的网红组合。'},
+{id:'普通食客',cond:function(){return true},t:'「普通食客」',p:'老者微笑着点了点头："你们的表现中规中矩，虽不算惊艳，但也算合格。"他递给每人一张优惠券："下次再来吧，期待你们更精彩的表现。"\n\n你们拿着优惠券走出美食城，心里暗暗发誓：下次一定要解锁隐藏结局！'}
+];
+
+// ========== 状态 ==========
+var G={name:'',role:'',choices:[],partnerChoices:[],round:0,stats:[0,0,0],items:[]};
+
+// ========== 工具 ==========
+function $(id){return document.getElementById(id)}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none'},2200)}
+function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});$(id).classList.add('active');window.scrollTo(0,0)}
+
+// ========== 口令码 ==========
+var CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function encode(choices,role){
+  var v=0;for(var i=0;i<5;i++)v|=(choices[i]<<i);
+  var c1=CH[v%CH.length],c2=CH[Math.floor(v/CH.length)%CH.length];
+  var prefix=role==='A'?'A':'B';
+  var sum=c1.charCodeAt(0)+c2.charCodeAt(0)+v;
+  var chk=CH[sum%CH.length];
+  return prefix+c1+c2+chk;
+}
+function decode(code){
+  if(!code||code.length!==4)return null;
+  code=code.toUpperCase().trim();
+  var prefix=code[0];if(prefix!=='A'&&prefix!=='B')return null;
+  var c1=code[1],c2=code[2],chk=code[3];
+  var i1=CH.indexOf(c1),i2=CH.indexOf(c2);
+  if(i1<0||i2<0)return null;
+  var v=i1+i2*CH.length;if(v>31)return null;
+  var sum=c1.charCodeAt(0)+c2.charCodeAt(0)+v;
+  if(CH[sum%CH.length]!==chk)return null;
+  var choices=[];for(var i=0;i<5;i++)choices.push((v>>i)&1);
+  return{role:prefix,choices:choices};
+}
+
+// ========== 流程 ==========
+function goName(){
+  $('home-name').value=localStorage.getItem('fc_name')||'';
+  show('s-welcome');
+}
+
+function startA(){
+  var n=$('home-name').value.trim();
+  if(!n){n=prompt('请输入昵称');if(!n)return}
+  localStorage.setItem('fc_name',n);
+  G={name:n,role:'A',choices:[],partnerChoices:[],round:0,stats:[0,0,0],items:[]};
+  renderRoundA();
+}
+
+function joinB(){
+  var n=$('home-name').value.trim();
+  var code=$('home-code').value.trim();
+  if(!n){toast('请输入昵称');return}
+  if(!code){toast('请输入口令码');return}
+  var parsed=decode(code);
+  if(!parsed){toast('口令码无效');return}
+  if(parsed.role!=='A'){toast('请输入玩家A的口令码');return}
+  localStorage.setItem('fc_name',n);
+  G={name:n,role:'B',choices:[],partnerChoices:parsed.choices,round:0,stats:[0,0,0],items:[]};
+  renderRoundB();
+}
+
+// ========== 玩家A 每轮 ==========
+function renderRoundA(){
+  var r=ROUNDS[G.round];
+  var h=roundDots()+roundHeader(r);
+  h+='<div class="story-box">'+esc(r.story)+'</div>';
+  h+='<p style="color:var(--text2);font-size:.85em;text-align:center;margin-bottom:10px"><span class="tag tag-a">'+esc(G.name)+'</span> 你的选择：</p>';
+  h+='<div class="opts">';
+  r.optA.forEach(function(o,i){
+    h+='<div class="opt" onclick="pickA('+i+')"><div class="opt-title">'+o.t+'</div><div class="opt-desc">'+esc(o.d)+'</div></div>';
+  });
+  h+='</div>';
+  $('game').innerHTML=h;show('s-game');
+}
+
+function pickA(idx){
+  G.choices[G.round]=idx;
+  var r=ROUNDS[G.round];
+  document.querySelectorAll('.opt').forEach(function(c,i){
+    if(i===idx)c.classList.add('picked');else c.classList.add('off');
+  });
+  setTimeout(function(){
+    G.round++;
+    if(G.round>=5) showCodeA();
+    else renderRoundA();
+  },500);
+}
+
+function showCodeA(){
+  var code=encode(G.choices,'A');
+  var h='<h2>冒险完成！</h2>';
+  h+='<p style="color:var(--text2);font-size:.9em;text-align:center;margin-bottom:10px">'+esc(G.name)+'（玩家A），你的口令码：</p>';
+  h+='<div class="code-box">'+code+'</div>';
+  h+='<button class="btn btn-full" onclick="copyText(\''+code+'\')">📋 复制口令码</button>';
+  h+='<div class="divider"></div>';
+  h+='<p style="color:var(--text2);font-size:.85em;text-align:center;margin-bottom:8px">把口令码发给对方，等对方完成后输入TA的口令码查看结局：</p>';
+  h+='<div class="code-row"><input type="text" id="b-code" placeholder="输入对方口令码" maxlength="6"><button class="btn btn-success btn-sm" onclick="seeEndA()">揭晓</button></div>';
+  $('game').innerHTML=h;show('s-game');
+}
+
+function seeEndA(){
+  var code=$('b-code').value.trim();
+  var parsed=decode(code);
+  if(!parsed){toast('口令码无效');return}
+  if(parsed.role!=='B'){toast('请输入玩家B的口令码');return}
+  G.partnerChoices=parsed.choices;
+  calcAndShowEnding();
+}
+
+// ========== 玩家B 每轮 ==========
+function renderRoundB(){
+  var r=ROUNDS[G.round];
+  var aIdx=G.partnerChoices[G.round];
+  var aOpt=r.optA[aIdx];
+  var h=roundDots()+statBar()+roundHeader(r);
+  h+='<div class="story-box">'+esc(r.story)+'</div>';
+  h+='<div class="opt partner"><div style="font-size:.78em;color:var(--text2);margin-bottom:4px"><span class="tag tag-a">玩家A</span> 选择了：</div>';
+  h+='<div class="opt-title">'+aOpt.t+'</div><div class="opt-desc">'+esc(aOpt.d)+'</div></div>';
+  h+='<p style="color:var(--text2);font-size:.85em;text-align:center;margin:12px 0 8px"><span class="tag tag-b">'+esc(G.name)+'</span> 你的选择：</p>';
+  h+='<div class="opts">';
+  r.optB.forEach(function(o,i){
+    h+='<div class="opt" onclick="pickB('+i+')"><div class="opt-title">'+o.t+'</div><div class="opt-desc">'+esc(o.d)+'</div></div>';
+  });
+  h+='</div>';
+  $('game').innerHTML=h;show('s-game');
+}
+
+function pickB(idx){
+  G.choices[G.round]=idx;
+  var r=ROUNDS[G.round];
+  var aIdx=G.partnerChoices[G.round];
+  var key=r.id+'-'+aIdx+''+idx;
+  var out=OUTCOMES[key];
+  // Update stats & items
+  if(out){G.stats[0]+=out.s[0];G.stats[1]+=out.s[1];G.stats[2]+=out.s[2];G.items.push(out.item)}
+  document.querySelectorAll('.opts .opt').forEach(function(c,i){
+    if(i===idx)c.classList.add('picked');else c.classList.add('off');
+  });
+  // Show outcome
+  setTimeout(function(){
+    var oh='';
+    if(out){
+      oh='<div class="outcome-box"><h3>✨ '+esc(out.t)+'</h3><p>'+esc(out.p)+'</p>';
+      oh+='<div class="item-tag">🎁 获得：'+esc(out.item)+'</div>';
+      var sc=[];if(out.s[0])sc.push('技艺+'+out.s[0]);if(out.s[1])sc.push('情谊+'+out.s[1]);if(out.s[2])sc.push('冒险+'+out.s[2]);
+      if(sc.length)oh+='<div class="stat-change">'+sc.join('  ')+'</div>';
+      oh+='</div>';
+    }
+    var btnText=G.round<4?'下一轮 →':'查看最终结局 🎉';
+    oh+='<button class="btn btn-full" onclick="nextB()" style="margin-top:12px">'+btnText+'</button>';
+    $('game').innerHTML+=oh;
+    window.scrollTo(0,document.body.scrollHeight);
+  },400);
+}
+
+function nextB(){
+  G.round++;
+  if(G.round>=5) showEndB();
+  else renderRoundB();
+}
+
+function showEndB(){
+  var bCode=encode(G.choices,'B');
+  calcAndShowEnding(bCode);
+}
+
+// ========== 结局计算 ==========
+function calcAndShowEnding(bCode){
+  // Compute stats from all 5 rounds
+  var stats=[0,0,0],items=[];
+  for(var i=0;i<5;i++){
+    var aIdx=G.role==='A'?G.choices[i]:G.partnerChoices[i];
+    var bIdx=G.role==='A'?G.partnerChoices[i]:G.choices[i];
+    var key=ROUNDS[i].id+'-'+aIdx+''+bIdx;
+    var out=OUTCOMES[key];
+    if(out){stats[0]+=out.s[0];stats[1]+=out.s[1];stats[2]+=out.s[2];items.push(out.item)}
+  }
+  // Find ending
+  var ending=ENDINGS.find(function(e){return e.cond(stats)})||ENDINGS[ENDINGS.length-1];
+  // Render
+  var h='<div class="round-dots">';
+  for(var i=0;i<5;i++)h+='<div class="rd done"></div>';
+  h+='</div>';
+  h+='<h1>🎉 '+esc(ending.t)+'</h1>';
+  h+='<div class="result-card"><div class="result-text">'+esc(ending.p)+'</div></div>';
+  // Stats
+  h+='<div class="final-stats">';
+  h+='<div class="fs"><div class="fv">'+stats[0]+'</div><div class="fl">🔪 技艺</div><div class="fb"><div class="fb-fill" style="width:'+stats[0]*10+'%"></div></div></div>';
+  h+='<div class="fs"><div class="fv">'+stats[1]+'</div><div class="fl">❤️ 情谊</div><div class="fb"><div class="fb-fill" style="width:'+stats[1]*10+'%"></div></div></div>';
+  h+='<div class="fs"><div class="fv">'+stats[2]+'</div><div class="fl">🗺️ 冒险</div><div class="fb"><div class="fb-fill" style="width:'+stats[2]*10+'%"></div></div></div>';
+  h+='</div>';
+  // Items
+  h+='<div class="items-list"><div style="color:var(--text2);font-size:.82em;margin-bottom:6px">🎒 收集道具</div>';
+  items.forEach(function(it){h+='<div class="it">• <span>'+esc(it)+'</span></div>'});
+  h+='</div>';
+  h+='<div style="text-align:center;color:var(--text2);font-size:.82em;margin:10px 0">共 <b style="color:var(--accent)">9</b> 种结局，试试不同组合吧！</div>';
+  // B code for A
+  if(bCode){
+    h+='<div style="margin:14px 0;padding:12px;background:rgba(255,179,71,0.06);border:1px solid rgba(255,179,71,0.2);border-radius:12px;text-align:center">';
+    h+='<div style="color:var(--text2);font-size:.82em;margin-bottom:4px">把口令码发给玩家A，让TA也能看到结局：</div>';
+    h+='<div style="font-size:1.8em;font-weight:bold;letter-spacing:6px;color:var(--accent);margin:4px 0">'+bCode+'</div>';
+    h+='<button class="btn btn-sm" onclick="copyText(\''+bCode+'\')">📋 复制</button></div>';
+  }
+  h+='<button class="btn btn-full" onclick="restart()">🔄 再来一局</button>';
+  h+='<button class="btn btn-full btn-outline" onclick="backHome()">🏠 返回首页</button>';
+  $('end').innerHTML=h;show('s-end');
+}
+
+// ========== 杂项 ==========
+function roundDots(){
+  var h='<div class="round-dots">';
+  for(var i=0;i<5;i++){
+    if(i<G.round)h+='<div class="rd done"></div>';
+    else if(i===G.round)h+='<div class="rd cur"></div>';
+    else h+='<div class="rd"></div>';
+  }
+  return h+'</div>';
+}
+function statBar(){
+  return '<div class="stat-bar"><span class="si">🔪技艺 <span class="sv">'+G.stats[0]+'</span></span><span class="si">❤️情谊 <span class="sv">'+G.stats[1]+'</span></span><span class="si">🗺️冒险 <span class="sv">'+G.stats[2]+'</span></span></div>';
+}
+function roundHeader(r){return '<div class="round-hd"><div class="num">第'+r.id+'轮 / 共5轮</div><div class="ttl">'+esc(r.title)+'</div></div>'}
+function copyText(t){try{navigator.clipboard.writeText(t);toast('已复制！')}catch(e){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);toast('已复制！')}}
+function restart(){G={name:'',role:'',choices:[],partnerChoices:[],round:0,stats:[0,0,0],items:[]};show('s-welcome')}
+function backHome(){restart()}
+
+// ========== 初始化 ==========
+(function(){
+  var saved=localStorage.getItem('fc_name');
+  if(saved)$('home-name').value=saved;
+  // Make welcome page "start" use the name input
+  var origBtn=document.querySelector('#s-welcome .btn-full');
+  origBtn.onclick=function(){
+    var n=$('home-name').value.trim();
+    if(!n){n=prompt('请输入昵称');if(!n)return}
+    localStorage.setItem('fc_name',n);
+    G.name=n;G.role='A';G.choices=[];G.round=0;G.stats=[0,0,0];G.items=[];G.partnerChoices=[];
+    renderRoundA();
+  };
+})();
+</script>
+</body>
+</html>
