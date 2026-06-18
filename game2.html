@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>复生村闹鬼破案记</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0f1a;--card:rgba(180,200,230,0.06);--border:rgba(100,160,255,0.18);--accent:#6ec6ff;--accent2:#a78bfa;--text:#e8edf5;--text2:#9aa5b8;--success:#4ade80;--glow:rgba(110,198,255,0.25)}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;min-height:100vh;background:var(--bg);background-image:radial-gradient(ellipse at 20% 80%,rgba(80,60,160,0.1) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(40,80,160,0.08) 0%,transparent 50%);overflow-x:hidden;color:var(--text)}
+.screen{display:none;max-width:640px;width:92%;margin:20px auto;padding:28px 22px;background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:20px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:fadeIn .5s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+h1{text-align:center;font-size:1.7em;color:var(--accent);text-shadow:0 0 20px var(--glow);margin-bottom:8px}
+h2{text-align:center;font-size:1.15em;color:var(--accent);margin-bottom:14px}
+.sub{text-align:center;color:var(--text2);font-size:.88em;margin-bottom:20px}
+input[type="text"]{width:100%;padding:11px 15px;border:2px solid rgba(100,160,255,0.25);border-radius:10px;background:rgba(255,255,255,0.04);color:var(--text);font-size:1em;outline:none;margin-bottom:10px;transition:border-color .3s}
+input[type="text"]:focus{border-color:var(--accent)}
+input[type="text"]::placeholder{color:rgba(154,165,184,0.4)}
+.btn{display:inline-block;padding:11px 24px;border:2px solid var(--accent);border-radius:12px;background:rgba(110,198,255,0.08);color:var(--accent);font-size:1em;cursor:pointer;transition:all .3s;text-align:center;min-height:48px;user-select:none}
+.btn:hover{background:rgba(110,198,255,0.2);transform:scale(1.03)}
+.btn:active{transform:scale(0.97)}
+.btn-full{width:100%;margin-bottom:8px}
+.btn-sm{padding:8px 18px;font-size:.88em;min-height:36px}
+.btn-outline{border-color:var(--text2);color:var(--text2);background:transparent}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-success{border-color:var(--success);color:var(--success);background:rgba(74,222,128,0.08)}
+.story-box{font-size:.95em;line-height:1.85;color:var(--text);padding:14px;margin-bottom:16px;background:rgba(255,255,255,0.025);border-radius:12px;border-left:3px solid var(--accent)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{padding:14px 18px;border:2px solid rgba(100,160,255,0.2);border-radius:14px;background:rgba(100,160,255,0.04);cursor:pointer;transition:all .3s}
+.opt:hover{background:rgba(100,160,255,0.12);border-color:var(--accent);transform:translateX(5px)}
+.opt.picked{border-color:var(--success);background:rgba(74,222,128,0.1);transform:none}
+.opt.off{opacity:.4;pointer-events:none}
+.opt.partner{border-color:rgba(167,139,250,0.35);background:rgba(167,139,250,0.06);cursor:default;pointer-events:none;opacity:.75}
+.opt-title{font-weight:bold;color:var(--accent);margin-bottom:3px;font-size:1em}
+.opt.picked .opt-title{color:var(--success)}
+.opt-desc{color:var(--text2);font-size:.85em;line-height:1.5}
+.code-box{text-align:center;font-size:2.2em;font-weight:bold;letter-spacing:8px;color:var(--accent);padding:16px;background:rgba(110,198,255,0.06);border-radius:12px;margin:12px 0;border:2px dashed rgba(110,198,255,0.25)}
+.code-row{display:flex;gap:8px;margin:8px 0}
+.code-row input{flex:1;margin:0;text-transform:uppercase;text-align:center;font-size:1.1em;letter-spacing:3px}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78em;font-weight:bold}
+.tag-a{background:rgba(110,198,255,0.12);color:var(--accent)}
+.tag-b{background:rgba(167,139,250,0.12);color:var(--accent2)}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(100,160,255,0.15),transparent);margin:14px 0}
+.stat-bar{display:flex;gap:10px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:10px;margin-bottom:14px;font-size:.82em;flex-wrap:wrap}
+.stat-bar .si{color:var(--text2)}.stat-bar .sv{color:var(--accent);font-weight:bold}
+.round-hd{text-align:center;margin-bottom:12px}
+.round-hd .num{color:var(--accent);font-size:.85em;font-weight:bold}
+.round-hd .ttl{color:var(--text);font-size:1.15em;font-weight:bold;margin-top:2px}
+.outcome-box{padding:14px;margin:12px 0;border-radius:12px;border:1px solid rgba(74,222,128,0.25);background:rgba(74,222,128,0.05)}
+.outcome-box h3{color:var(--success);font-size:1.05em;margin-bottom:6px}
+.outcome-box p{color:var(--text);font-size:.9em;line-height:1.7}
+.outcome-box .item-tag{display:inline-block;margin-top:6px;padding:3px 10px;background:rgba(110,198,255,0.1);border-radius:8px;color:var(--accent);font-size:.82em}
+.stat-change{color:var(--success);font-size:.82em;margin-top:4px}
+.result-card{text-align:center;padding:24px 18px;border:2px solid var(--accent);border-radius:16px;background:linear-gradient(135deg,rgba(110,198,255,0.06),rgba(167,139,250,0.04));animation:rIn .6s ease}
+@keyframes rIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.result-title{font-size:1.5em;color:var(--accent);margin-bottom:10px;text-shadow:0 0 20px var(--glow)}
+.result-text{font-size:1em;line-height:1.85;color:var(--text);white-space:pre-line}
+.items-list{margin:14px 0;padding:12px;background:rgba(255,255,255,0.025);border-radius:10px;text-align:left}
+.items-list .it{padding:4px 0;color:var(--text2);font-size:.85em}
+.items-list .it span{color:var(--accent)}
+.final-stats{display:flex;gap:8px;margin:14px 0}
+.fs{text-align:center;flex:1;padding:10px;background:rgba(255,255,255,0.025);border-radius:10px}
+.fs .fv{font-size:1.6em;color:var(--accent);font-weight:bold}
+.fs .fl{font-size:.75em;color:var(--text2);margin-top:2px}
+.fs .fb{height:4px;background:rgba(110,198,255,0.12);border-radius:2px;margin-top:6px;overflow:hidden}
+.fs .fb-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .6s ease}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:10px 22px;background:rgba(110,198,255,0.92);color:#0a0f1a;border-radius:10px;font-weight:bold;z-index:100;display:none;animation:tIn .3s ease;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.how{background:rgba(255,255,255,0.025);border-radius:10px;padding:12px;margin:14px 0;font-size:.85em;color:var(--text2);line-height:1.8}
+.how b{color:var(--accent)}
+.round-dots{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.rd{width:8px;height:8px;border-radius:50%;background:rgba(110,198,255,0.12)}
+.rd.done{background:var(--success)}.rd.cur{background:var(--accent);box-shadow:0 0 6px var(--glow);width:20px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="screen active" id="s-welcome">
+<h1>🔍 复生村闹鬼破案记</h1>
+<p class="sub">双人互动悬疑探案 · 5轮剧情 · 9种结局</p>
+<div class="divider"></div>
+<div class="story-box">复生村，一个藏在深山里的古老村落。一周前，村长紧急求助：村里开始闹鬼——半夜有黑影游荡，牲畜莫名死亡，多名村民声称看到了已故亲人的身影。你们是镇上派来的调查员，必须在五天内查明真相，否则村子就要被封锁。<br><br>你们背着包，站在村口的石牌坊下。雾气弥漫，远处的瓦房若隐若现。</div>
+<div class="how"><b>🎮 怎么玩？</b><br>
+① <b>调查员A</b> 先完成5天调查，生成口令码<br>
+② 把口令码发给 <b>调查员B</b>（微信/QQ）<br>
+③ <b>调查员B</b> 输入口令码，看到A每轮行动后再做决定<br>
+④ 揭晓你们的破案结局！（共9种）</div>
+<button class="btn btn-full" id="start-btn">🔦 开始调查</button>
+<div class="divider"></div>
+<p style="color:var(--text2);font-size:.85em;text-align:center;margin-bottom:6px">你是调查员B？输入口令码加入：</p>
+<input type="text" id="home-name" placeholder="你的昵称" maxlength="8">
+<div class="code-row"><input type="text" id="home-code" placeholder="输入口令码" maxlength="6"><button class="btn btn-success btn-sm" onclick="joinB()">加入</button></div>
+</div>
+
+<div class="screen" id="s-game"><div id="game"></div></div>
+<div class="screen" id="s-end"><div id="end"></div></div>
+
+<script>
+// ========== 数据 ==========
+var ROUNDS=[
+{id:1,title:'村口祠堂',story:'村口有一座破旧的祠堂，门虚掩着，里面隐约有烛光。旁边坐着一位抽旱烟的老人，他眯着眼打量你们："外来人？想查鬼？先说说你们信不信这世上有鬼。"',
+optA:[{t:'进祠堂查看',d:'你推开木门，里面供着许多牌位，香炉里还有未燃尽的香。'},{t:'与老人交谈',d:'你蹲下身，客气地问："老人家，您见过那个黑影吗？"'}],
+optB:[{t:'绕到祠堂后面',d:'你悄悄转到屋后，发现墙角有一串新鲜的脚印，通向竹林。'},{t:'掏出笔记本记录',d:'你打开本子，认真记下老人的每一句话，准备交叉比对。'}]},
+{id:2,title:'废弃老宅',story:'第二天清晨，你们来到村西的废弃老宅。大门紧锁，窗户用木板钉死，但二楼有一扇窗户破了。邻居说这宅子以前住着矿难的幸存者李老汉，他三年前失踪了。',
+optA:[{t:'从破窗翻进去',d:'你找来梯子，爬上二楼，钻进黑洞洞的房间。'},{t:'敲门试探',d:'你用力敲了几下大门，耳朵贴上去听里面的动静。'}],
+optB:[{t:'检查门锁',d:'你蹲下仔细看锁孔，发现锁芯有新的划痕，近期有人开过这把锁。'},{t:'询问邻居',d:'你转身去找那位邻居，想打听更多关于李老汉的事。'}]},
+{id:3,title:'后山墓地',story:'傍晚时分，你们来到后山墓地。墓碑排列整齐，但其中一座坟明显被挖开过，泥土还是新的。四周静得出奇，偶尔有乌鸦飞过。',
+optA:[{t:'检查被挖开的坟',d:'你走近那座新土坟，蹲下查看墓碑上的名字。'},{t:'站在高处观察墓地布局',d:'你爬到一块大石头上，俯瞰整个墓地的格局。'}],
+optB:[{t:'用手电筒照向树林',d:'你打开强光手电，扫视墓地周围的树林，看看有没有人影。'},{t:'拍下墓碑照片',d:'你用手机拍下所有墓碑的照片，准备回去对比名单。'}]},
+{id:4,title:'村长家',story:'村长家在村子中央，是一栋两层小楼。你们敲门进去，村长是个五十多岁的中年人，面色疲惫。他给你们倒了茶，双手微微发抖："你们查出什么了？"',
+optA:[{t:'直接质问矿难真相',d:'你盯着村长的眼睛，一字一句地问："十年前的矿难，到底是怎么回事？"'},{t:'出示发现的证据',d:'你把日记本、照片、就诊卡摆在桌上，让他解释。'}],
+optB:[{t:'观察村长的微表情',d:'你不说话，专注地看着村长的脸，捕捉每一个细微的反应。'},{t:'假装相信村长',d:'你笑着打圆场："我们只是随便问问，您别紧张。"然后暗中留意他接下来的举动。'}]},
+{id:5,title:'地下密室',story:'第五天，最后一天。所有的线索指向同一个地方：老宅的地下室。你们再次来到废弃老宅，打开了地下室的暗门。沿着潮湿的石阶往下走，一股霉味扑面而来。地下室尽头有一扇铁门，门缝里透出微弱的灯光。',
+optA:[{t:'一脚踹开铁门',d:'你后退两步，猛地踹向铁门，准备强行闯入。'},{t:'轻声敲门',d:'你深吸一口气，礼貌地敲了三下："我们是来帮你的，请开门。"'}],
+optB:[{t:'举起手机录像',d:'你打开录像功能，对准铁门，准备记录一切。'},{t:'躲在楼梯转角',d:'你没有靠近，而是退到阴影里，以防万一需要支援。'}]}
+];
+
+var OUTCOMES={
+'1-00':{t:'祠堂密道',p:'你走进祠堂，发现供桌下有块地板松动；B在屋后发现脚印通向竹林。两人一碰头，推测脚印是从祠堂内部出来的。你们撬开地板，露出一个向下的阶梯——祠堂底下另有乾坤。',item:'暗道入口',s:[1,1,1]},
+'1-01':{t:'牌位玄机',p:'你查看牌位，注意到有几个牌位的摆放顺序不对，像是被人动过；B记录老人说的话："那些死去的都是十年前矿难的人。"你联想到牌位顺序可能对应死亡时间。',item:'矿难名单',s:[2,0,1]},
+'1-10':{t:'竹林踪迹',p:'你与老人攀谈，老人叹气："那黑影专挑午夜出现。"B在竹林里找到一串脚印和一根折断的竹枝。你们沿着脚印走了几十米，发现一个被落叶掩盖的铁皮箱子。',item:'铁皮箱（旧照片+生锈钥匙）',s:[0,2,1]},
+'1-11':{t:'老人证词',p:'你耐心倾听，老人断断续续说了很多：十年前矿难死了十几个人，此后每逢月圆就有怪事。B一字不漏地记录下来，发现老人提到的日期与牲畜死亡的日子完全吻合。',item:'月圆规律',s:[1,0,2]},
+'2-00':{t:'阁楼发现',p:'你翻窗进入二楼，里面布满灰尘，地上有新鲜的脚印。B检查门锁后确认有人近期进出。你循着脚印走上阁楼，发现一个日记本，记录了李老汉对矿难的愧疚——他当年是矿工队长。',item:'李老汉日记',s:[1,1,1]},
+'2-01':{t:'卧室线索',p:'你从窗户进入后，在卧室床头柜发现一张照片，照片背面写着"我对不起他们"。B从邻居口中得知李老汉有一个儿子在矿难中去世，李老汉后来精神失常。',item:'父子关系',s:[2,0,1]},
+'2-10':{t:'密室入口',p:'你敲门后听到里面有轻微的响声。B发现门锁是新划痕，用铁丝试着开锁，竟然打开了！你们推门而入，客厅地面有一个暗门，通往地下室。',item:'地下室暗门',s:[0,2,1]},
+'2-11':{t:'邻居的恐惧',p:'你敲门无果，B从邻居那里得到重要信息：李老汉的儿子其实没死，只是毁容了，一直住在老宅的地下室里，村里人都以为他死了。',item:'毁容儿子',s:[1,0,2]},
+'3-00':{t:'空坟之谜',p:'你查看墓碑，上面刻着"李建设之墓"——正是李老汉儿子的名字。但坟是空的！B用手电照向树林，发现一个人影一闪而过。你们追过去，在地上捡到一件沾满泥土的外套，口袋里有一张医院就诊卡。',item:'就诊卡',s:[1,1,1]},
+'3-01':{t:'姓名核对',p:'你查看墓碑，B拍下所有照片。晚上回到住处对比，发现矿难名单中有一位外地工人的墓碑不存在——尸体一直没有找到。你们怀疑那个人可能根本没死。',item:'失踪者',s:[2,0,1]},
+'3-10':{t:'墓地格局',p:'你站在高处俯瞰，发现墓地的排列并非随意——从空中看形成了一个奇怪的符号。B用手电照向树林时突然照到一个白色影子，但一眨眼就不见了。',item:'符号图案',s:[0,2,1]},
+'3-11':{t:'照片中的细节',p:'你观察布局，B拍了照片。放大照片时，你们发现其中一张墓碑照片里有一个模糊的人脸出现在墓碑后面——那不是鬼魂，而是一个脸上有烧伤疤痕的活人。',item:'烧伤脸',s:[1,0,2]},
+'4-00':{t:'心理博弈',p:'你直接质问矿难，村长脸色煞白。B观察到他的手抖得更厉害了。在你连续追问下，他终于崩溃："我不是故意的！那天瓦斯报警器坏了，我为了赶工期让他们继续挖……"他承认隐瞒安全隐患导致矿难。',item:'村长认罪',s:[1,1,1]},
+'4-01':{t:'证据压制',p:'你摆出所有证据，村长看到就诊卡时瞳孔骤缩。B假装轻松地说："我们只是例行公事。"村长松了口气，但眼神不自觉地瞟向书架后面的保险柜。',item:'保险柜位置',s:[2,0,1]},
+'4-10':{t:'谎言破绽',p:'你态度温和，村长逐渐放松。但B敏锐地捕捉到他说漏嘴的一句："那个李老汉的儿子，早就该死在外面……"你们对视一眼——他知道李老汉儿子的下落。',item:'村长知情',s:[0,2,1]},
+'4-11':{t:'欲擒故纵',p:'你假装被村长说服，表示明天就离开。村长明显松了口气。趁他去厨房，B迅速翻看桌上文件，发现一份土地转让协议——有人想买下整个村子开发旅游。',item:'土地协议',s:[1,0,2]},
+'5-00':{t:'正面冲突',p:'你踹开铁门，里面一个满脸伤疤的男人惊恐地缩在角落。B的手机录下了全过程。他渐渐平静，讲述真相：他是李建设，当年矿难后毁容，父亲让他假死隐居。最近闹鬼是因为他半夜出去找吃的被村民误认为鬼魂。村长为逼走村民卖地，故意散布闹鬼谣言。真相大白。',item:'案件告破',s:[1,1,1]},
+'5-01':{t:'谈判专家',p:'你示意B录像，然后对门里说："我们知道你是谁。村长已经被控制了。"门缓缓打开，李建设走了出来，看到录像镜头愣了一下，但很快释然。他交出了村长当年伪造安全报告的复印件，铁证如山。',item:'铁证如山',s:[2,0,1]},
+'5-10':{t:'信任沟通',p:'你轻声敲门，里面沉默许久，终于传来沙哑的声音："你们……不怕我吗？"你说："我们是来了解真相的。"门开了一条缝，露出一张烧伤的脸。他哭诉了一切——他是受害者，村长才是幕后黑手。你们答应帮他讨回公道。',item:'公道承诺',s:[0,2,1]},
+'5-11':{t:'智取证据',p:'你敲门表明身份，B躲在暗处。李建设开门后交出了所有证据：村长的伪造文件、矿难真实记录、以及村长威胁他的录音。B在暗处用录音笔录下全部对话。你们带着证据离开，直接上报，村长当晚被捕。',item:'完整证据链',s:[1,0,2]}
+};
+
+var ENDINGS=[
+{id:'名侦探搭档',cond:function(s){return s[0]>=7&&s[2]>=5},t:'「名侦探搭档」',p:'你们凭借缜密的推理和默契配合，不仅破了案，还揪出了背后的利益链，成为警界的传奇组合。\n\n复生村恢复了平静，李建设被安排接受治疗，村民们为你们立了一块感谢牌匾。'},
+{id:'孤胆英雄',cond:function(s){return s[1]>=7&&s[0]>=4},t:'「孤胆英雄」',p:'你们靠胆识冲破重重阻碍，虽然过程中有惊险，但最终以暴制暴制服了罪犯。不过也因此受了处分——上级批评你们"太莽撞了"。\n\n但村民们在请愿书上签名，称你们是"真正的英雄"。'},
+{id:'文职高手',cond:function(s){return s[2]>=7&&s[1]<=3},t:'「文职高手」',p:'你们几乎没有正面冲突，全靠谈话和取证就让罪犯伏法，被誉为"最文明的破案方式"。\n\n上级专门发文表彰你们的办案风格，成为全系统学习的典范。'},
+{id:'完美搭档',cond:function(s){return s[0]>=5&&s[1]>=5&&s[2]>=5},t:'「完美搭档」',p:'推理、勇气、合作无一短板，你们被评为年度最佳调查员，受邀培训新人。\n\n在结业典礼上，你们把复生村的故事改编成教材，教会了新一代调查员如何在迷雾中找到真相。'},
+{id:'乌龙侦探',cond:function(s){return s[0]<=3&&s[1]<=3&&s[2]<=3},t:'「乌龙侦探」',p:'你们搞错了方向，差点冤枉好人，最后靠真凶自首才结案，被村民们笑话了很久。\n\n不过你们从中吸取了深刻教训，半年后的下一个案子，你们漂亮地翻盘了。'},
+{id:'莽撞英雄',cond:function(s){return s[0]<=3&&s[1]>=6&&s[2]>=4},t:'「莽撞英雄」',p:'你们靠蛮力解决了问题，但也破坏了不少证据。虽然案子破了，却被上级批评程序不当。\n\n不过李建设私下给你们写了一封感谢信："谢谢你们没有放弃找到我。"'},
+{id:'知心搭档',cond:function(s){return s[2]>=8&&s[0]>=3},t:'「知心搭档」',p:'你们用真诚打动了李建设，他自愿交出所有证据。你们不仅破了案，还帮他重建了生活。\n\n三年后，李建设开了一家小面馆，招牌上写着："调查员推荐"。你们每次路过都会进去吃一碗。'},
+{id:'安乐椅侦探',cond:function(s){return s[0]>=6&&s[1]<=2},t:'「安乐椅侦探」',p:'你们几乎没出过门，全靠远程分析和别人提供的线索破案，被同行戏称为"云侦探"。\n\n但没人能否认你们的推理能力——坐在椅子上就能破案，这是真正的大脑力量。'},
+{id:'普通调查员',cond:function(){return true},t:'「普通调查员」',p:'你们的调查虽然中规中矩，但最终也拼凑出了大致真相。村长被免职调查，李建设得到了妥善安置。\n\n走出复生村时，你们回头看了一眼石牌坊，心里想：下次一定要做得更好。'}
+];
+
+// ========== 状态 ==========
+var G={name:'',role:'',choices:[],partnerChoices:[],round:0,stats:[0,0,0],items:[]};
+
+// ========== 工具 ==========
+function $(id){return document.getElementById(id)}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none'},2200)}
+function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});$(id).classList.add('active');window.scrollTo(0,0)}
+
+// ========== 口令码 ==========
+var CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function encode(choices,role){
+  var v=0;for(var i=0;i<5;i++)v|=(choices[i]<<i);
+  var c1=CH[v%CH.length],c2=CH[Math.floor(v/CH.length)%CH.length];
+  var prefix=role==='A'?'A':'B';
+  var sum=c1.charCodeAt(0)+c2.charCodeAt(0)+v;
+  var chk=CH[sum%CH.length];
+  return prefix+c1+c2+chk;
+}
+function decode(code){
+  if(!code||code.length!==4)return null;
+  code=code.toUpperCase().trim();
+  var prefix=code[0];if(prefix!=='A'&&prefix!=='B')return null;
+  var c1=code[1],c2=code[2],chk=code[3];
+  var i1=CH.indexOf(c1),i2=CH.indexOf(c2);
+  if(i1<0||i2<0)return null;
+  var v=i1+i2*CH.length;if(v>31)return null;
+  var sum=c1.charCodeAt(0)+c2.charCodeAt(0)+v;
+  if(CH[sum%CH.length]!==chk)return null;
+  var choices=[];for(var i=0;i<5;i++)choices.push((v>>i)&1);
+  return{role:prefix,choices:choices};
+}
+
+// ========== 流程 ==========
+$('start-btn').onclick=function(){
+  var n=$('home-name').value.trim();
+  if(!n){n=prompt('请输入昵称');if(!n)return}
+  localStorage.setItem('fc2_name',n);
+  G={name:n,role:'A',choices:[],partnerChoices:[],round:0,stats:[0,0,0],items:[]};
+  renderRoundA();
+};
+
+function joinB(){
+  var n=$('home-name').value.trim();
+  var code=$('home-code').value.trim();
+  if(!n){toast('请输入昵称');return}
+  if(!code){toast('请输入口令码');return}
+  var parsed=decode(code);
+  if(!parsed){toast('口令码无效');return}
+  if(parsed.role!=='A'){toast('请输入调查员A的口令码');return}
+  localStorage.setItem('fc2_name',n);
+  G={name:n,role:'B',choices:[],partnerChoices:parsed.choices,round:0,stats:[0,0,0],items:[]};
+  renderRoundB();
+}
+
+// ========== 调查员A ==========
+function renderRoundA(){
+  var r=ROUNDS[G.round];
+  var h=roundDots()+roundHeader(r);
+  h+='<div class="story-box">'+esc(r.story)+'</div>';
+  h+='<p style="color:var(--text2);font-size:.85em;text-align:center;margin-bottom:10px"><span class="tag tag-a">'+esc(G.name)+'</span> 你的行动：</p>';
+  h+='<div class="opts">';
+  r.optA.forEach(function(o,i){
+    h+='<div class="opt" onclick="pickA('+i+')"><div class="opt-title">'+o.t+'</div><div class="opt-desc">'+esc(o.d)+'</div></div>';
+  });
+  h+='</div>';
+  $('game').innerHTML=h;show('s-game');
+}
+
+function pickA(idx){
+  G.choices[G.round]=idx;
+  document.querySelectorAll('.opt').forEach(function(c,i){
+    if(i===idx)c.classList.add('picked');else c.classList.add('off');
+  });
+  setTimeout(function(){
+    G.round++;
+    if(G.round>=5)showCodeA();else renderRoundA();
+  },500);
+}
+
+function showCodeA(){
+  var code=encode(G.choices,'A');
+  var h='<h2>📋 五天调查完成</h2>';
+  h+='<p style="color:var(--text2);font-size:.9em;text-align:center;margin-bottom:10px">'+esc(G.name)+'（调查员A），你的口令码：</p>';
+  h+='<div class="code-box">'+code+'</div>';
+  h+='<button class="btn btn-full" onclick="copyText(\''+code+'\')">📋 复制口令码</button>';
+  h+='<div class="divider"></div>';
+  h+='<p style="color:var(--text2);font-size:.85em;text-align:center;margin-bottom:8px">发给搭档，等对方完成后输入TA的口令码查看破案结局：</p>';
+  h+='<div class="code-row"><input type="text" id="b-code" placeholder="输入对方口令码" maxlength="6"><button class="btn btn-success btn-sm" onclick="seeEndA()">揭晓</button></div>';
+  $('game').innerHTML=h;show('s-game');
+}
+
+function seeEndA(){
+  var code=$('b-code').value.trim();
+  var parsed=decode(code);
+  if(!parsed){toast('口令码无效');return}
+  if(parsed.role!=='B'){toast('请输入调查员B的口令码');return}
+  G.partnerChoices=parsed.choices;
+  calcAndShowEnding();
+}
+
+// ========== 调查员B ==========
+function renderRoundB(){
+  var r=ROUNDS[G.round];
+  var aIdx=G.partnerChoices[G.round];
+  var aOpt=r.optA[aIdx];
+  var dayLabel=['第一天','第二天','第三天','第四天','第五天'][G.round];
+  var h=roundDots()+statBar()+roundHeader(r);
+  h+='<div class="story-box">'+esc(r.story)+'</div>';
+  h+='<div class="opt partner"><div style="font-size:.78em;color:var(--text2);margin-bottom:4px"><span class="tag tag-a">调查员A</span> '+dayLabel+'的行动：</div>';
+  h+='<div class="opt-title">'+aOpt.t+'</div><div class="opt-desc">'+esc(aOpt.desc||aOpt.d)+'</div></div>';
+  h+='<p style="color:var(--text2);font-size:.85em;text-align:center;margin:12px 0 8px"><span class="tag tag-b">'+esc(G.name)+'</span> 你的行动：</p>';
+  h+='<div class="opts">';
+  r.optB.forEach(function(o,i){
+    h+='<div class="opt" onclick="pickB('+i+')"><div class="opt-title">'+o.t+'</div><div class="opt-desc">'+esc(o.d)+'</div></div>';
+  });
+  h+='</div>';
+  $('game').innerHTML=h;show('s-game');
+}
+
+function pickB(idx){
+  G.choices[G.round]=idx;
+  var r=ROUNDS[G.round];
+  var aIdx=G.partnerChoices[G.round];
+  var key=r.id+'-'+aIdx+''+idx;
+  var out=OUTCOMES[key];
+  if(out){G.stats[0]+=out.s[0];G.stats[1]+=out.s[1];G.stats[2]+=out.s[2];G.items.push(out.item)}
+  document.querySelectorAll('.opts .opt').forEach(function(c,i){
+    if(i===idx)c.classList.add('picked');else c.classList.add('off');
+  });
+  setTimeout(function(){
+    var oh='';
+    if(out){
+      oh='<div class="outcome-box"><h3>🔍 '+esc(out.t)+'</h3><p>'+esc(out.p)+'</p>';
+      oh+='<div class="item-tag">📎 获得：'+esc(out.item)+'</div>';
+      var sc=[];if(out.s[0])sc.push('推理+'+out.s[0]);if(out.s[1])sc.push('勇气+'+out.s[1]);if(out.s[2])sc.push('合作+'+out.s[2]);
+      if(sc.length)oh+='<div class="stat-change">'+sc.join('  ')+'</div>';
+      oh+='</div>';
+    }
+    var btnText=G.round<4?'下一天 →':'查看破案结局 🎉';
+    oh+='<button class="btn btn-full" onclick="nextB()" style="margin-top:12px">'+btnText+'</button>';
+    $('game').innerHTML+=oh;
+    window.scrollTo(0,document.body.scrollHeight);
+  },400);
+}
+
+function nextB(){
+  G.round++;
+  if(G.round>=5)showEndB();else renderRoundB();
+}
+
+function showEndB(){
+  var bCode=encode(G.choices,'B');
+  calcAndShowEnding(bCode);
+}
+
+// ========== 结局 ==========
+function calcAndShowEnding(bCode){
+  var stats=[0,0,0],items=[];
+  for(var i=0;i<5;i++){
+    var aIdx=G.role==='A'?G.choices[i]:G.partnerChoices[i];
+    var bIdx=G.role==='A'?G.partnerChoices[i]:G.choices[i];
+    var key=ROUNDS[i].id+'-'+aIdx+''+bIdx;
+    var out=OUTCOMES[key];
+    if(out){stats[0]+=out.s[0];stats[1]+=out.s[1];stats[2]+=out.s[2];items.push(out.item)}
+  }
+  var ending=ENDINGS.find(function(e){return e.cond(stats)})||ENDINGS[ENDINGS.length-1];
+  var h='<div class="round-dots">';for(var i=0;i<5;i++)h+='<div class="rd done"></div>';h+='</div>';
+  h+='<h1>🔍 案件告破</h1>';
+  h+='<div class="result-card"><div class="result-text">'+esc(ending.p)+'</div></div>';
+  h+='<div class="final-stats">';
+  h+='<div class="fs"><div class="fv">'+stats[0]+'</div><div class="fl">🧠 推理</div><div class="fb"><div class="fb-fill" style="width:'+stats[0]*10+'%"></div></div></div>';
+  h+='<div class="fs"><div class="fv">'+stats[1]+'</div><div class="fl">⚡ 勇气</div><div class="fb"><div class="fb-fill" style="width:'+stats[1]*10+'%"></div></div></div>';
+  h+='<div class="fs"><div class="fv">'+stats[2]+'</div><div class="fl">🤝 合作</div><div class="fb"><div class="fb-fill" style="width:'+stats[2]*10+'%"></div></div></div>';
+  h+='</div>';
+  h+='<div class="items-list"><div style="color:var(--text2);font-size:.82em;margin-bottom:6px">📎 收集线索</div>';
+  items.forEach(function(it){h+='<div class="it">• <span>'+esc(it)+'</span></div>'});
+  h+='</div>';
+  h+='<div style="text-align:center;color:var(--text2);font-size:.82em;margin:10px 0">共 <b style="color:var(--accent)">9</b> 种结局，试试不同组合吧！</div>';
+  if(bCode){
+    h+='<div style="margin:14px 0;padding:12px;background:rgba(110,198,255,0.05);border:1px solid rgba(110,198,255,0.2);border-radius:12px;text-align:center">';
+    h+='<div style="color:var(--text2);font-size:.82em;margin-bottom:4px">把口令码发给调查员A，让TA也能看到结局：</div>';
+    h+='<div style="font-size:1.8em;font-weight:bold;letter-spacing:6px;color:var(--accent);margin:4px 0">'+bCode+'</div>';
+    h+='<button class="btn btn-sm" onclick="copyText(\''+bCode+'\')">📋 复制</button></div>';
+  }
+  h+='<button class="btn btn-full" onclick="restart()">🔄 再来一局</button>';
+  h+='<button class="btn btn-full btn-outline" onclick="backHome()">🏠 返回首页</button>';
+  $('end').innerHTML=h;show('s-end');
+}
+
+// ========== 杂项 ==========
+function roundDots(){
+  var h='<div class="round-dots">';
+  for(var i=0;i<5;i++){if(i<G.round)h+='<div class="rd done"></div>';else if(i===G.round)h+='<div class="rd cur"></div>';else h+='<div class="rd"></div>';}
+  return h+'</div>';
+}
+function statBar(){return '<div class="stat-bar"><span class="si">🧠推理 <span class="sv">'+G.stats[0]+'</span></span><span class="si">⚡勇气 <span class="sv">'+G.stats[1]+'</span></span><span class="si">🤝合作 <span class="sv">'+G.stats[2]+'</span></span></div>'}
+function roundHeader(r){return '<div class="round-hd"><div class="num">第'+r.id+'天 / 共5天</div><div class="ttl">'+esc(r.title)+'</div></div>'}
+function copyText(t){try{navigator.clipboard.writeText(t);toast('已复制！')}catch(e){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);toast('已复制！')}}
+function restart(){G={name:'',role:'',choices:[],partnerChoices:[],round:0,stats:[0,0,0],items:[]};show('s-welcome')}
+function backHome(){restart()}
+
+// ========== 初始化 ==========
+(function(){var s=localStorage.getItem('fc2_name');if(s)$('home-name').value=s})();
+</script>
+</body>
+</html>
